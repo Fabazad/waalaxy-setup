@@ -1,0 +1,275 @@
+version: "3.8"
+
+services:
+  otto:
+    build:
+      context: back/services/otto
+      dockerfile: Dockerfile.dev
+      args:
+        - PORT=6666
+        - NPM_TOKEN=0bac5327-18e7-4495-82ba-c5e40b5712d5
+    environment:
+      PORT: 6666
+      REDIS_URL: redis://redis:6379
+      NODE_ENV: E2E
+      MONGODB_URI: mongodb://mongo:27017/Otto
+      MONGODB_URI_TEST: mongodb://mongo:27017/OttoTest
+      DOCUMENTATION_USER: admin
+      DOCUMENTATION_PASSWORD: admin
+    ports:
+      - "6666:6666"
+    volumes:
+      - ./back/services/otto:/usr/src/otto
+      - /usr/src/otto/node_modules # Remove this if you have pure JS dependencies
+    depends_on:
+      - redis
+      - mongo
+  goulag:
+    build:
+      context: back/services/goulag
+      dockerfile: Dockerfile.dev
+      args:
+        - PORT=5002
+        - NPM_TOKEN=0bac5327-18e7-4495-82ba-c5e40b5712d5
+    environment:
+      PORT: 5002
+      REDIS_URL: redis://redis:6379
+      OTTO_URL: ws://otto:6666
+      OTTO_TOKEN: eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJhdXRob3IiOiJnb3VsYWcifQ.9QX913j_OmzFyr7y6Z82gxAxkhusT_WGqOdAdaLmuFg
+      NODE_ENV: E2E
+      MONGODB_URI: mongodb://mongo:27017/Goulag
+      MONGODB_URI_TEST: mongodb://mongo:27017/GoulagTest
+      DOCUMENTATION_USER: admin
+      DOCUMENTATION_PASSWORD: admin
+    ports:
+      - "5002:5002"
+    volumes:
+      - ./back/services/goulag:/usr/src/goulag
+      - /usr/src/goulag/node_modules # Remove this if you have pure JS dependencies
+    depends_on:
+      - redis
+      - mongo
+      - otto
+  profesor:
+    build:
+      context: back/services/profesor
+      dockerfile: Dockerfile.dev
+      args:
+        - PORT=5001
+        - NPM_TOKEN=0bac5327-18e7-4495-82ba-c5e40b5712d5
+    environment:
+      PORT: 5001
+      REDIS_URL: redis://redis:6379
+      OTTO_URL: ws://otto:6666
+      OTTO_TOKEN: eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJhdXRob3IiOiJwcm9mZXNvciJ9.vGARs6kAgyviA-rq7ldlP4Fqxsnpgq_o3Bsd04_T2bQ
+      GOULAG_BASE_URL: http://goulag:5002
+      SHIVA_BASE_URL: http://shiva:5003
+      ENUTROF_BASE_URL: http://enutrof:5005
+      HERMES_BASE_URL: http://hermes:5004
+      NODE_ENV: E2E
+      MONGODB_URI: mongodb://mongo:27017/Profesor
+      MONGODB_URI_TEST: mongodb://mongo:27017/ProfesorTest
+      DOCUMENTATION_USER: admin
+      DOCUMENTATION_PASSWORD: admin
+    ports:
+      - "5001:5001"
+    volumes:
+      - ./back/services/profesor:/usr/src/profesor
+      - /usr/src/profesor/node_modules # Remove this if you have pure JS dependencies
+    depends_on:
+      - redis
+      - mongo
+      - otto
+  stargate:
+    build:
+      context: back/services/stargate
+      dockerfile: Dockerfile.dev
+      args:
+        - PORT=5000
+        - NPM_TOKEN=0bac5327-18e7-4495-82ba-c5e40b5712d5
+    environment:
+      PORT: 5000
+      REDIS_URL: redis://redis:6379
+      OTTO_URL: ws://otto:6666
+      OTTO_TOKEN: eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJhdXRob3IiOiJzdGFyZ2F0ZSJ9.y8VIfAsWL22nlpWMWKsv_9ebUCJ1xziQ1Qh6srjMTg8
+      GOULAG_URL: goulag:5002
+      PROFESOR_URL: profesor:5001
+      SHIVA_URL: shiva:5003
+      HERMES_URL: hermes:5004
+      VOLTAIRE_URL: voltaire:5006
+      ZILEAN_URL: zilean:5007
+      NODE_ENV: E2E
+      MONGODB_URI: mongodb://mongo:27017/Stargate
+      MONGODB_URI_TEST: mongodb://mongo:27017/StargateTest
+      DOCUMENTATION_USER: admin
+      DOCUMENTATION_PASSWORD: admin
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./back/services/stargate:/usr/src/stargate
+      - /usr/src/stargate/node_modules # Remove this if you have pure JS dependencies
+    depends_on:
+      - redis
+      - mongo
+      - otto
+  shiva:
+    build:
+      context: back/services/shiva
+      dockerfile: Dockerfile.dev
+      args:
+        - PORT=5003
+        - NPM_TOKEN=0bac5327-18e7-4495-82ba-c5e40b5712d5
+    environment:
+      PORT: 5003
+      REDIS_URL: redis://redis:6379
+      OTTO_URL: ws://otto:6666
+      ZILEAN_BASE_URL: http://zilean:5007
+      OTTO_TOKEN: eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJhdXRob3IiOiJzdGFyZ2F0ZSJ9.y8VIfAsWL22nlpWMWKsv_9ebUCJ1xziQ1Qh6srjMTg8
+      NODE_ENV: E2E
+      MONGODB_URI: mongodb://mongo:27017/Shiva
+      MONGODB_URI_TEST: mongodb://mongo:27017/ShivaTest
+      DOCUMENTATION_USER: admin
+      DOCUMENTATION_PASSWORD: admin
+    ports:
+      - "5003:5003"
+    volumes:
+      - ./back/services/shiva:/usr/src/shiva
+      - /usr/src/shiva/node_modules # Remove this if you have pure JS dependencies
+    depends_on:
+      - redis
+      - mongo
+      - otto
+  hermes:
+    build:
+      context: back/services/hermes
+      dockerfile: Dockerfile.dev
+      args:
+        - PORT=5004
+        - NPM_TOKEN=0bac5327-18e7-4495-82ba-c5e40b5712d5
+    environment:
+      PORT: 5004
+      REDIS_URL: redis://redis:6379
+      OTTO_URL: ws://otto:6666
+      ZILEAN_BASE_URL: http://zilean:5007
+      OTTO_TOKEN: eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJhdXRob3IiOiJzdGFyZ2F0ZSJ9.y8VIfAsWL22nlpWMWKsv_9ebUCJ1xziQ1Qh6srjMTg8
+      SECRET: kzenjf68zef/*zef-gergrege
+      GOOGLE_CLIENT_ID: 141637350927-kfbhgp5p13tf9r5e9c2vlr7cid20m19u.apps.googleusercontent.com
+      GOOGLE_CLIENT_SECRET: B29hgBJUFUOQF2tRsZtxeyPI
+      MYSTIQUE_URL: http://localhost:3000
+      NODE_ENV: E2E
+      MONGODB_URI: mongodb://mongo:27017/Hermes
+      MONGODB_URI_TEST: mongodb://mongo:27017/HermesTest
+      DOCUMENTATION_USER: admin
+      DOCUMENTATION_PASSWORD: admin
+    ports:
+      - "5004:5004"
+    volumes:
+      - ./back/services/hermes:/usr/src/hermes
+      - /usr/src/hermes/node_modules # Remove this if you have pure JS dependencies
+    depends_on:
+      - redis
+      - mongo
+      - otto
+  enutrof:
+    build:
+      context: back/services/enutrof
+      dockerfile: Dockerfile.dev
+      args:
+        - PORT=5005
+        - NPM_TOKEN=0bac5327-18e7-4495-82ba-c5e40b5712d5
+    environment:
+      PORT: 5005
+      REDIS_URL: redis://redis:6379
+      NODE_ENV: E2E
+      MONGODB_URI: mongodb://mongo:27017/Enutrof
+      MONGODB_URI_TEST: mongodb://mongo:27017/EnutrofTest
+      DOCUMENTATION_USER: admin
+      DOCUMENTATION_PASSWORD: admin
+      OTTO_URL: ws://otto:6666
+      OTTO_TOKEN: eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJhdXRob3IiOiJlbnV0cm9mIn0.jD0AkKiPFtigpe8VwUgX7qzWonbd2dfF3eQ5Nd1n3S8
+      E2E_EXTERNAL_API: http://chameleon:6458
+      DROP_CONTACT_API_KEY: "e2e-test"
+      ENRICHMENT_CREATION_MAX_INTERVAL: 1000
+      MAX_GET_BATCH_RESPONSE_ITERATIONS: 5
+      GET_BATCH_RESPONSE_INTERVAL: 200
+    ports:
+      - "5005:5005"
+    volumes:
+      - ./back/services/enutrof:/usr/src/enutrof
+      - /usr/src/enutrof/node_modules # Remove this if you have pure JS dependencies
+    depends_on:
+      - redis
+      - mongo
+      - otto
+  voltaire:
+    build:
+      context: back/services/voltaire
+      dockerfile: Dockerfile.dev
+      args:
+        - PORT=5006
+        - NPM_TOKEN=0bac5327-18e7-4495-82ba-c5e40b5712d5
+    environment:
+      PORT: 5006
+      REDIS_URL: redis://redis:6379
+      OTTO_URL: ws://otto:6666
+      OTTO_TOKEN: eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJhdXRob3IiOiJ2b2x0YWlyZSJ9.VGRQLYaML3JazCMTpsiGjrK4dLgCGE2msJo8lll3RhM
+      NODE_ENV: E2E
+      MONGODB_URI: mongodb://mongo:27017/Voltaire
+      MONGODB_URI_TEST: mongodb://mongo:27017/VoltaireTest
+      DOCUMENTATION_USER: admin
+      DOCUMENTATION_PASSWORD: admin
+    ports:
+      - "5006:5006"
+    volumes:
+      - ./back/services/voltaire:/usr/src/voltaire
+      - /usr/src/voltaire/node_modules # Remove this if you have pure JS dependencies
+    depends_on:
+      - redis
+      - mongo
+      - otto
+  zilean:
+    build:
+      context: back/services/zilean
+      dockerfile: Dockerfile.dev
+      args:
+        - PORT=5007
+        - NPM_TOKEN=0bac5327-18e7-4495-82ba-c5e40b5712d5
+    environment:
+      PORT: 5007
+      REDIS_URL: redis://redis:6379
+      OTTO_URL: ws://otto:6666
+      OTTO_TOKEN: eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJhdXRob3IiOiJ6aWxlYW4ifQ.RxLoMQRvjv5FTmHebvIQcHEWHAYsNJBWNFczZck1tgA
+      NODE_ENV: E2E
+      MONGODB_URI: mongodb://mongo:27017/Zilean
+      MONGODB_URI_TEST: mongodb://mongo:27017/ZileanTest
+      DOCUMENTATION_USER: admin
+      DOCUMENTATION_PASSWORD: admin
+    ports:
+      - "5007:5007"
+    volumes:
+      - ./back/services/zilean:/usr/src/zilean
+      - /usr/src/zilean/node_modules # Remove this if you have pure JS dependencies
+    depends_on:
+      - redis
+      - mongo
+      - otto
+  mongo:
+    image: mongo:latest
+    volumes:
+      - mongodata:/data/db
+    ports:
+      - "27017:27017"
+    logging:
+      driver: none
+  redis:
+    image: redis:latest
+    command: ["redis-server", "--bind", "redis", "--port", "6379"]
+    volumes:
+      - ~/RedisDB/data:/data/db
+    ports:
+      - "6379:6379"
+    logging:
+      driver: none
+
+volumes:
+  mongodata:

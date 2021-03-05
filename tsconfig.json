@@ -1,0 +1,15 @@
+{
+    "compilerOptions": {
+        "module": "commonjs",
+        "emitDecoratorMetadata": true,
+        "experimentalDecorators": true,
+        "esModuleInterop": true,
+        "outDir": "dist",
+        "target": "ESNext",
+        "strict": true,
+        "resolveJsonModule": true,
+        "allowJs": true,
+    },
+    "include": ["src/**/*", "project-setup.ts"],
+    "exclude": ["node_modules"],
+}
