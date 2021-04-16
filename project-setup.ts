@@ -165,6 +165,13 @@ const repositories: Repositories = {
         setupCommand: 'npm install',
         folderName: 'bouncer',
         basePath: 'back/services',
+    },
+    hawking: {
+        url: 'git@github.com:Waapi-Pro/hawking.git',
+        developingBranch: 'develop',
+        setupCommand: 'npm install',
+        folderName: 'hawking',
+        basePath: 'back/services',
     }
 };
 
