@@ -253,6 +253,32 @@ services:
       - redis
       - mongo
       - otto
+  bouncer:
+    build:
+      context: back/services/bouncer
+      dockerfile: Dockerfile.dev
+      args:
+        - PORT=5008
+        - NPM_TOKEN=0bac5327-18e7-4495-82ba-c5e40b5712d5
+    environment:
+      PORT: 5008
+      REDIS_URL: redis://redis:6379
+      OTTO_URL: ws://otto:6666
+      OTTO_TOKEN: eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJhdXRob3IiOiJib3VuY2VyIn0.rv0NYsD4M4rPfHvf96KiN0LuOriPyuJxqWVd1961xNc
+      NODE_ENV: E2E
+      MONGODB_URI: mongodb://mongo:27017/Bouncer
+      MONGODB_URI_TEST: mongodb://mongo:27017/BouncerTest
+      DOCUMENTATION_USER: admin
+      DOCUMENTATION_PASSWORD: admin
+    ports:
+      - "5008:5008"
+    volumes:
+      - ./back/services/bouncer:/usr/src/bouncer
+      - /usr/src/bouncer/node_modules # Remove this if you have pure JS dependencies
+    depends_on:
+      - redis
+      - mongo
+      - otto
   mongo:
     image: mongo:latest
     volumes:

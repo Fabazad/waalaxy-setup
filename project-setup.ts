@@ -159,6 +159,13 @@ const repositories: Repositories = {
         folderName: 'waap-ui',
         basePath: 'front/packages',
     },
+    bouncer: {
+        url: 'git@github.com:Waapi-Pro/bouncer.git',
+        developingBranch: 'develop',
+        setupCommand: 'npm install',
+        folderName: 'bouncer',
+        basePath: 'back/services',
+    }
 };
 
 const execCommand = (command: string, options: ExecOptions): Promise<true> => {
