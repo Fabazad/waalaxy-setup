@@ -100,6 +100,7 @@ services:
       HERMES_URL: hermes:5004
       VOLTAIRE_URL: voltaire:5006
       ZILEAN_URL: zilean:5007
+      BOUNCER_URL: http://bouncer:5008
       NODE_ENV: E2E
       MONGODB_URI: mongodb://mongo:27017/Stargate
       MONGODB_URI_TEST: mongodb://mongo:27017/StargateTest
