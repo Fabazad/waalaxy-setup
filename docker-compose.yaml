@@ -20,7 +20,6 @@ services:
       - "6666:6666"
     volumes:
       - ./back/services/otto:/usr/src/otto
-      - /usr/src/otto/node_modules # Remove this if you have pure JS dependencies
     depends_on:
       - redis
       - mongo
@@ -46,7 +45,6 @@ services:
       - "5002:5002"
     volumes:
       - ./back/services/goulag:/usr/src/goulag
-      - /usr/src/goulag/node_modules # Remove this if you have pure JS dependencies
     depends_on:
       - redis
       - mongo
@@ -77,7 +75,6 @@ services:
       - "5001:5001"
     volumes:
       - ./back/services/profesor:/usr/src/profesor
-      - /usr/src/profesor/node_modules # Remove this if you have pure JS dependencies
     depends_on:
       - redis
       - mongo
@@ -110,7 +107,6 @@ services:
       - "5000:5000"
     volumes:
       - ./back/services/stargate:/usr/src/stargate
-      - /usr/src/stargate/node_modules # Remove this if you have pure JS dependencies
     depends_on:
       - redis
       - mongo
@@ -137,7 +133,6 @@ services:
       - "5003:5003"
     volumes:
       - ./back/services/shiva:/usr/src/shiva
-      - /usr/src/shiva/node_modules # Remove this if you have pure JS dependencies
     depends_on:
       - redis
       - mongo
@@ -169,7 +164,6 @@ services:
       - "5004:5004"
     volumes:
       - ./back/services/hermes:/usr/src/hermes
-      - /usr/src/hermes/node_modules # Remove this if you have pure JS dependencies
     depends_on:
       - redis
       - mongo
@@ -200,7 +194,6 @@ services:
       - "5005:5005"
     volumes:
       - ./back/services/enutrof:/usr/src/enutrof
-      - /usr/src/enutrof/node_modules # Remove this if you have pure JS dependencies
     depends_on:
       - redis
       - mongo
@@ -226,7 +219,6 @@ services:
       - "5006:5006"
     volumes:
       - ./back/services/voltaire:/usr/src/voltaire
-      - /usr/src/voltaire/node_modules # Remove this if you have pure JS dependencies
     depends_on:
       - redis
       - mongo
@@ -252,7 +244,6 @@ services:
       - "5007:5007"
     volumes:
       - ./back/services/zilean:/usr/src/zilean
-      - /usr/src/zilean/node_modules # Remove this if you have pure JS dependencies
     depends_on:
       - redis
       - mongo
@@ -278,7 +269,6 @@ services:
       - "5008:5008"
     volumes:
       - ./back/services/bouncer:/usr/src/bouncer
-      - /usr/src/bouncer/node_modules # Remove this if you have pure JS dependencies
     depends_on:
       - redis
       - mongo
@@ -306,7 +296,6 @@ services:
       - "5009:5009"
     volumes:
       - ./back/services/hawking:/usr/src/hawking
-      - /usr/src/hawking/node_modules # Remove this if you have pure JS dependencies
     depends_on:
       - redis
       - mongo
