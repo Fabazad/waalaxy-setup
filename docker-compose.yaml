@@ -65,6 +65,7 @@ services:
       SHIVA_BASE_URL: http://shiva:5003
       ENUTROF_BASE_URL: http://enutrof:5005
       HERMES_BASE_URL: http://hermes:5004
+      JANUS_URL: http://janus:5010
       NODE_ENV: E2E
       MONGODB_URI: mongodb://mongo:27017/Profesor
       MONGODB_URI_TEST: mongodb://mongo:27017/ProfesorTest
@@ -97,12 +98,13 @@ services:
       HERMES_URL: hermes:5004
       VOLTAIRE_URL: voltaire:5006
       ZILEAN_URL: zilean:5007
+      JANUS_URL: janus:5010
       BOUNCER_URL: http://bouncer:5008
       NODE_ENV: E2E
       MONGODB_URI: mongodb://mongo:27017/Stargate
       MONGODB_URI_TEST: mongodb://mongo:27017/StargateTest
       DOCUMENTATION_USER: admin
-      DOCUMENTATION_PASSWORD: admin
+      DOCUMENTATION_PASSWORD: admin     
     ports:
       - "5000:5000"
     volumes:
@@ -111,6 +113,7 @@ services:
       - redis
       - mongo
       - otto
+      - bouncer
   shiva:
     build:
       context: back/services/shiva
@@ -247,7 +250,7 @@ services:
     depends_on:
       - redis
       - mongo
-      - otto
+      - otto  
   bouncer:
     build:
       context: back/services/bouncer
@@ -265,6 +268,7 @@ services:
       MONGODB_URI_TEST: mongodb://mongo:27017/BouncerTest
       DOCUMENTATION_USER: admin
       DOCUMENTATION_PASSWORD: admin
+      MIRAGE_TOKEN: eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJleHBpcmF0aW9uRGF0ZSI6IjIxMjAtMDMtMzFUMTY6NDI6MjYuNDYzWiIsInBlcm1pc3Npb25zIjpbIlNhYVNUb2tlbiJdfQ.yCvExMyJ8CBvRsfjRsD6eAaQrajkjnj9mFlV3iP4S4A
     ports:
       - "5008:5008"
     volumes:
@@ -296,6 +300,33 @@ services:
       - "5009:5009"
     volumes:
       - ./back/services/hawking:/usr/src/hawking
+    depends_on:
+      - redis
+      - mongo
+      - otto
+  janus:
+    build:
+      context: back/services/janus
+      dockerfile: Dockerfile.dev
+      args:
+        - PORT=5010
+        - NPM_TOKEN=0bac5327-18e7-4495-82ba-c5e40b5712d5
+    environment:
+      PORT: 5010
+      REDIS_URL: redis://redis:6379
+      OTTO_URL: ws://otto:6666
+      OTTO_TOKEN: eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJhdXRob3IiOiJqYW51cyJ9.2uvHhq148S8zFaq7Ck-B7lFC8vNpldsUwP2d1Qe2wKY
+      NODE_ENV: E2E
+      MONGODB_URI: mongodb://mongo:27017/Janus
+      MONGODB_URI_TEST: mongodb://mongo:27017/JanusTest
+      DOCUMENTATION_USER: admin
+      DOCUMENTATION_PASSWORD: admin
+      WEB_CONCURRENCY: 2
+    ports:
+      - "5010:5010"
+    volumes:
+      - ./janus:/usr/src/janus
+      - /usr/src/janus/node_modules # Remove this if you have pure JS dependencies
     depends_on:
       - redis
       - mongo
