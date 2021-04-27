@@ -54,6 +54,13 @@ const repositories: Repositories = {
         folderName: 'hermes',
         basePath: 'back/services',
     },
+    'hermes-daemon': {
+        url: 'git@github.com:Waapi-Pro/hermes-daemon.git',
+        developingBranch: 'develop',
+        setupCommand: 'npm install',
+        folderName: 'hermes-daemon',
+        basePath: 'back/services',
+    },
     janus: {
         url: 'git@github.com:Waapi-Pro/janus.git',
         developingBranch: 'develop',
@@ -172,7 +179,7 @@ const repositories: Repositories = {
         setupCommand: 'npm install',
         folderName: 'hawking',
         basePath: 'back/services',
-    }
+    },
 };
 
 const execCommand = (command: string, options: ExecOptions): Promise<true> => {
