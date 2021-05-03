@@ -180,6 +180,14 @@ const repositories: Repositories = {
         folderName: 'hawking',
         basePath: 'back/services',
     },
+    zola: {
+        url: 'git@github.com:Waapi-Pro/zola.git',
+        developingBranch: 'master',
+        setupCommand: 'npm install',
+        folderName: 'zola',
+        basePath: 'front/packages',
+    }
+
 };
 
 const execCommand = (command: string, options: ExecOptions): Promise<true> => {
