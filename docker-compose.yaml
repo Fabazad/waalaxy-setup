@@ -100,6 +100,7 @@ services:
       ZILEAN_URL: zilean:5007
       JANUS_URL: janus:5010
       BOUNCER_URL: http://bouncer:5008
+      HAWKING_URL: http://hawking:5009
       NODE_ENV: E2E
       MONGODB_URI: mongodb://mongo:27017/Stargate
       MONGODB_URI_TEST: mongodb://mongo:27017/StargateTest
