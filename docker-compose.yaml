@@ -353,8 +353,7 @@ services:
     ports:
       - "5010:5010"
     volumes:
-      - ./janus:/usr/src/janus
-      - /usr/src/janus/node_modules # Remove this if you have pure JS dependencies
+      - ./back/services/janus:/usr/src/janus
     depends_on:
       - redis
       - mongo
