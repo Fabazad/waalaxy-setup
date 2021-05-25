@@ -1,6 +1,7 @@
 spiderman/
 back/
 front/
+lifeline-waalaxy/
 .DS_STORE
 node_modules
 scripts/flow/*/.flowconfig

@@ -108,6 +108,7 @@ services:
             MONGODB_URI_TEST: mongodb://mongo:27017/StargateTest
             DOCUMENTATION_USER: admin
             DOCUMENTATION_PASSWORD: admin
+            LIFELINE_API_KEY: token
         ports:
             - '5000:5000'
         volumes:
@@ -136,6 +137,7 @@ services:
             DOCUMENTATION_USER: admin
             DOCUMENTATION_PASSWORD: admin
             GOULAG_URL: http://goulag:5002/graphql
+            LIFELINE_TOKEN: token
         ports:
             - '5003:5003'
         volumes:
@@ -168,6 +170,7 @@ services:
             MONGODB_URI_TEST: mongodb://mongo:27017/HermesTest
             DOCUMENTATION_USER: admin
             DOCUMENTATION_PASSWORD: admin
+            SALT_TOKEN: kzenj62-f68zef/*zef-g:th1ge4
         ports:
             - '5004:5004'
         volumes:
