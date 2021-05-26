@@ -13,6 +13,7 @@
     "author": "",
     "license": "ISC",
     "dependencies": {
+        "@waapi/mirage": "^1.0.36",
         "@waapi/onu": "^2.0.31",
         "dayjs": "^1.10.4",
         "dotenv": "^9.0.2",

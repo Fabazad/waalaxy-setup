@@ -1,3 +1,4 @@
+import MirageClient from '@waapi/mirage';
 import OnuClient from '@waapi/onu';
 import mongoose from 'mongoose';
 import { loginToDatabase } from '../../../mongoose';
@@ -85,6 +86,7 @@ const UserPermissionSchema = new mongoose.Schema(
 );
 
 const onuClient = new OnuClient('waalaxy', `Bearer ${process.env.WAAPI_API_TOKEN}`);
+const mirageClient = new MirageClient(process.env.MIRAGE_TOKEN, true);
 
 export const sendDiscountCodeToPayers = async (isLive: boolean) => {
     if (isLive) {
@@ -116,26 +118,27 @@ export const sendDiscountCodeToPayers = async (isLive: boolean) => {
         userPermissions.map(async (userPermission) => {
             const user = users.find((u) => u._id.toString() === userPermission.user.toString());
             if (!user) throw new Error('User not found');
+            const { code } = await mirageClient.getDiscount(userPermission.waapiId, 30, 30);
             const params = [
                 [
                     {
-                        id: 'myid',
+                        id: 'd-e7a8159709bd42e88c924f1d067daa6f',
                         language: 'en',
-                        senderMail: 'waalaxy@gmail.com',
-                        senderName: 'Waalaxy',
+                        senderMail: 'contact@waalaxy.com',
+                        senderName: 'Margot from Waalaxy',
                     },
                     {
-                        id: 'myid',
+                        id: 'd-fc2c69e052294a2c9afd7b2303ebeac4',
                         language: 'fr',
-                        senderMail: 'waalaxy@gmail.com',
-                        senderName: 'Waalaxy',
+                        senderMail: 'contact@waalaxy.com',
+                        senderName: 'Margot de Waalaxy',
                     },
                 ],
                 1,
                 userPermission.waapiId,
                 'beta_access_paid_discount',
                 {
-                    discountCode: 'zfozeg',
+                    code,
                     _id: userPermission.waapiId,
                     id: userPermission.waapiId,
                     firstName: user.firstName,
