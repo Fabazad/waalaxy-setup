@@ -93,7 +93,7 @@ const DraftCampaignSchema = new mongoose.Schema(
     { timestamps: true },
 );
 
-export const updatDraftCampaignWithTagPlan = async () => {
+export const updateDraftCampaignWithTagPlan = async () => {
     console.log('Begin updatDraftCampaignWithTagPlan');
     const profesorDatabase = await loginToDatabase(process.env.PROFESOR_DATABASE!);
     const DraftCampaign = profesorDatabase.model<IDraftCampaign & mongoose.Document>('DraftCampaign', DraftCampaignSchema);
