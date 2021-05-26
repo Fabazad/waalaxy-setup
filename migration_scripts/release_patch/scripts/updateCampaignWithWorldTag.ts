@@ -1,7 +1,7 @@
-import { loginToDatabase } from '../../../mongoose';
-import { getPlanByWorld } from './getPlanByWorld';
 import mongoose, { Schema } from 'mongoose';
 import { BASE_CAMPAIGN_PRIORITY } from '../../../back/services/profesor/src/config';
+import { loginToDatabase } from '../../../mongoose';
+import { getPlanByWorld } from './getPlanByWorld';
 const CAMPAIGN_STATES = ['paused', 'running', 'stopped'] as const;
 
 const scriptUpdateCampaignWithTagPlan = async (Campaign : any, World:any) => {
@@ -12,7 +12,7 @@ const scriptUpdateCampaignWithTagPlan = async (Campaign : any, World:any) => {
             const world = await World.findOne({_id: campaign.world})
             if(!world) return
             const tag = getPlanByWorld(world);
-            const worldTags = campaign?.worldTags?.filter((worldTag: string) =>
+            const worldTags = (campaign?.worldTags? || []).filter((worldTag: string) =>
                 worldTag !== 'templates.tags.business' && worldTag !== 'templates.tags.advanced' && worldTag !== 'templates.tags.pro'
             )
             await Campaign.updateOne(

@@ -2,7 +2,7 @@ import mongoose, { Schema } from 'mongoose';
 import { loginToDatabase } from '../../../mongoose';
 
 const scriptUpdateOccupationUndefined = async (Profile: any) => {
-    await Profile.updateMany({occupation: "undefined @ undefined"}, { $unset: { occupation: "" } });
+    await Profile.updateMany({ occupation: 'undefined @ undefined' }, { $unset: { occupation: 1 } });
 };
 
 const DropContactEnrichment = new Schema({

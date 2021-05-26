@@ -1,24 +1,24 @@
-import { loginToDatabase } from '../../../mongoose';
-import { getPlanByWorld } from './getPlanByWorld';
 import * as mongoose from 'mongoose';
 import { IDraftCampaign } from '../../../back/services/profesor/src/entities/DraftCampaign';
-
+import { loginToDatabase } from '../../../mongoose';
+import { getPlanByWorld } from './getPlanByWorld';
 
 const scriptUpdateDraftCampaignWithTagPlan = async (DraftCampaign: any) => {
     const draftCampaigns = await DraftCampaign.find({});
-    console.log(draftCampaigns)
     await Promise.all(
         draftCampaigns.map(async (draftCampaign: any) => {
-            const tag = getPlanByWorld(draftCampaign.sequence)
-            console.log(tag)
-            const worldTags = draftCampaign.sequence?.tags?.filter((worldTag : string) => worldTag !== 'templates.tags.business' && worldTag !== 'templates.tags.advanced' && worldTag !== 'templates.tags.pro');
+            const tag = getPlanByWorld(draftCampaign.sequence);
+            const worldTags = (draftCampaign.sequence?.tags || [])?.filter(
+                (worldTag: string) =>
+                    worldTag !== 'templates.tags.business' && worldTag !== 'templates.tags.advanced' && worldTag !== 'templates.tags.pro',
+            );
             await DraftCampaign.updateOne(
                 {
                     _id: draftCampaign._id,
                 },
                 {
-                   "sequence.tags": [...worldTags, tag] ,
-                }
+                    'sequence.tags': [...worldTags, tag],
+                },
             );
         }),
     );
@@ -97,6 +97,6 @@ export const updateDraftCampaignWithTagPlan = async () => {
     console.log('Begin updatDraftCampaignWithTagPlan');
     const profesorDatabase = await loginToDatabase(process.env.PROFESOR_DATABASE!);
     const DraftCampaign = profesorDatabase.model<IDraftCampaign & mongoose.Document>('DraftCampaign', DraftCampaignSchema);
-    await scriptUpdateDraftCampaignWithTagPlan(DraftCampaign)
+    await scriptUpdateDraftCampaignWithTagPlan(DraftCampaign);
     console.log('Done');
 };

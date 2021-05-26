@@ -99,6 +99,5 @@ export const cleanProspectsConversationMonitored = async (isLive: boolean) => {
         { conversationIsMonitored: true },
         { $set: { isRepliedMonitored: true, isSeenMonitored: true }, $unset: { conversationIsMonitored: 1 } },
     );
-    console.log(res);
     console.log('Done');
 };
