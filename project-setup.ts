@@ -186,8 +186,14 @@ const repositories: Repositories = {
         setupCommand: 'npm install',
         folderName: 'zola',
         basePath: 'front/packages',
+    },
+    'bouncer-client': {
+        url: 'git@github.com:Waapi-Pro/bouncer-client.git',
+        developingBranch: 'develop',
+        setupCommand: 'npm install',
+        folderName: 'bouncer-client',
+        basePath: 'back/packages',
     }
-
 };
 
 const execCommand = (command: string, options: ExecOptions): Promise<true> => {
