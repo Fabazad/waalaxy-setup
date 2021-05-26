@@ -1,3 +1,4 @@
+import axios from 'axios';
 import mongoose from 'mongoose';
 import { loginToDatabase } from '../../../mongoose';
 
@@ -97,6 +98,7 @@ const conditionPipeline = [
 ];
 
 export const restartTravelers = async () => {
+    console.log('Starting restartTravelers');
     const profesorDatabase = await loginToDatabase(process.env.PROFESOR_DATABASE!);
     const Traveler = profesorDatabase.model<any & mongoose.Document>('Traveler', TravelerSchema);
 
@@ -157,6 +159,12 @@ export const restartTravelers = async () => {
             if (event.channel.includes('WEBHOOK_ACTION_SUCCEEDED')) eventsCount.webhook.success += 1;
             if (event.channel.includes('WEBHOOK_ACTION_FAILED')) eventsCount.webhook.failed += 1;
         });
+
+        await axios.put(
+            'https://profesor-revenant.herokuapp.com/api/admin/replayEvents',
+            { events },
+            { headers: { 'x-lifeline-token': '4aecf7c8-efae-42ce-8ba0-da8a89eb0044' } },
+        );
 
         console.log(eventsCount);
 

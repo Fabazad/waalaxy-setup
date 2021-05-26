@@ -36,6 +36,7 @@ const UserPermissionSchema = new mongoose.Schema(
 );
 
 export const changeEveryoneToFreeTrial = async (isLive: boolean) => {
+    console.log('Starting changeEveryoneToFreeTrial');
     if (!isLive) return console.log('Not in live mode');
     const bouncerDatabase = await loginToDatabase(process.env.BOUNCER_DATABASE!);
     const UserPermission = bouncerDatabase.model<any & mongoose.Document>('UserPermission', UserPermissionSchema);
@@ -49,7 +50,7 @@ export const changeEveryoneToFreeTrial = async (isLive: boolean) => {
                 'plan.name': 'business',
                 'plan.periodicity': 'weekly',
                 'plan.startDate': new Date().toISOString(),
-                'plan.expirationDate': '2021-06-04T20:00:43.264Z',
+                'plan.expirationDate': '2021-06-06T20:00:43.264Z',
                 'permissions.included': [{ name: 'business_role' }, { name: 'staff_role' }],
             },
         },
@@ -64,7 +65,7 @@ export const changeEveryoneToFreeTrial = async (isLive: boolean) => {
                 'plan.name': 'business',
                 'plan.periodicity': 'weekly',
                 'plan.startDate': new Date().toISOString(),
-                'plan.expirationDate': '2021-06-04T20:00:43.264Z',
+                'plan.expirationDate': '2021-06-06T20:00:43.264Z',
                 'permissions.included': [{ name: 'business_role' }],
             },
         },

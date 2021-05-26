@@ -67,12 +67,14 @@ services:
             SHIVA_BASE_URL: http://shiva:5003
             ENUTROF_BASE_URL: http://enutrof:5005
             HERMES_BASE_URL: http://hermes:5004
+            BOUNCER_URL: http://bouncer:5008
             JANUS_URL: http://janus:5010
             NODE_ENV: E2E
             MONGODB_URI: mongodb://mongo:27017/Profesor
             MONGODB_URI_TEST: mongodb://mongo:27017/ProfesorTest
             DOCUMENTATION_USER: admin
             DOCUMENTATION_PASSWORD: admin
+            LIFELINE_TOKEN: token
             ADMIN_API_KEY: 4aecf7c8-efae-42ce-8ba0-da8a89eb0044
         ports:
             - '5001:5001'

@@ -1,6 +1,5 @@
-import { loginToDatabase } from '../../../mongoose';
 import mongoose, { Schema } from 'mongoose';
-
+import { loginToDatabase } from '../../../mongoose';
 
 const scriptUpdateOccupationUndefined = async (Profile: any) => {
     await Profile.updateMany({occupation: "undefined @ undefined"}, { $unset: { occupation: "" } });
@@ -33,13 +32,12 @@ const DropContactEnrichment = new Schema({
     company_results: String,
 });
 
-
- const BirthdaySchema = new Schema({
+const BirthdaySchema = new Schema({
     month: Number,
     day: Number,
 });
 
- const phoneNumberSchema = new Schema({
+const phoneNumberSchema = new Schema({
     type: { type: Schema.Types.String },
     number: String,
 });
@@ -75,8 +73,8 @@ const ProfileSchema = new Schema(
 
 export const changeProfileOccupationUndefined = async () => {
     console.log('Begin changeProfileOccupationUndefined');
-    const goulagDatabase =  await loginToDatabase(process.env.GOULAG_DATABASE!);
+    const goulagDatabase = await loginToDatabase(process.env.GOULAG_DATABASE!);
     const Profile = goulagDatabase.model<any & mongoose.Document>('Profile', ProfileSchema);
-    await scriptUpdateOccupationUndefined(Profile)
+    await scriptUpdateOccupationUndefined(Profile);
     console.log('Done');
 };

@@ -84,6 +84,7 @@ const ProspectSchema = new mongoose.Schema(
 );
 
 export const cleanProspectsConversationMonitored = async (isLive: boolean) => {
+    console.log('Starting cleanProspectsConversationMonitored');
     if (!isLive) return console.log('Not in live mode closing');
     if (!!isLive) {
         const timer = 20;

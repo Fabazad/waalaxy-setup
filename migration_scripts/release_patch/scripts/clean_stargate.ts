@@ -50,6 +50,7 @@ const UserSchema = new mongoose.Schema(
 );
 
 export const cleanStargate = async (isLive: boolean) => {
+    console.log('Starting clean_stargate');
     if (!isLive) return console.log('Not in live mode closing');
     if (!!isLive) {
         const timer = 20;
@@ -60,6 +61,7 @@ export const cleanStargate = async (isLive: boolean) => {
     const stargateDatabase = await loginToDatabase(process.env.STARGATE_DATABASE!);
     const User = stargateDatabase.model<any & mongoose.Document>('User', UserSchema);
 
+    await User.updateMany({ hasPaid: true }, { $set: { hasPaidBeta: true } });
     await User.updateMany({}, { $unset: { hasPaid: 1, isStaff: 1, hasBypass: 1 } });
     console.log('Done');
 };

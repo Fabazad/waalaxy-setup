@@ -86,9 +86,10 @@ const UserPermissionSchema = new mongoose.Schema(
 );
 
 const onuClient = new OnuClient('waalaxy', `Bearer ${process.env.WAAPI_API_TOKEN}`);
-const mirageClient = new MirageClient(process.env.MIRAGE_TOKEN, true);
+const mirageClient = new MirageClient(process.env.MIRAGE_TOKEN!, true);
 
 export const sendDiscountCodeToPayers = async (isLive: boolean) => {
+    console.log('Starting sendDiscountCodeToPayers');
     if (isLive) {
         const timer = 20;
         console.log(`Script is in live mode, it will really send mails to users, waiting ${timer} seconds before starting, CTRL+C to cancel`);
@@ -104,7 +105,8 @@ export const sendDiscountCodeToPayers = async (isLive: boolean) => {
     const UserPermission = bouncerDatabase.model<any & mongoose.Document>('UserPermission', UserPermissionSchema);
 
     const users: Array<{ _id: string; email: string; firstName: string; lastName: string; language: string }> = await User.find(
-        { hasPaid: true, isStaff: { $ne: true } },
+        { _id: '6068e35d62f9fd002289c6aa' },
+        // { hasPaid: true, isStaff: { $ne: true } },
         { email: 1, firstName: 1, lastName: 1, language: 1 },
     );
 
@@ -113,6 +115,8 @@ export const sendDiscountCodeToPayers = async (isLive: boolean) => {
     console.log(`Found ${userPermissions.length} users permissions`);
 
     if (userPermissions.length !== users.length) throw new Error('Wrong count');
+    console.log('Starting...');
+    await new Promise((r) => setTimeout(r, 5 * 1000));
 
     const results = await Promise.all(
         userPermissions.map(async (userPermission) => {
@@ -156,3 +160,5 @@ export const sendDiscountCodeToPayers = async (isLive: boolean) => {
     console.log(results);
     console.log('Done');
 };
+
+sendDiscountCodeToPayers(true);
