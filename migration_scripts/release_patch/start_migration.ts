@@ -8,6 +8,7 @@ import { updateCampaignWithTagPlan } from './scripts/updateCampaignWithWorldTag'
 import { updateWorldTemplateWithTagPlan } from './scripts/updateWorldTemplateWithTagPlan';
 import { updateWorldWithTagPlan } from './scripts/updateWorldWithTagPlan';
 import { updateTravelersPathsAndStops } from './scripts/update_traveler_paths_and_stops';
+import { updatDraftCampaignWithTagPlan } from './scripts/updateDraftCampaignTagPlan';
 
 const isLive = !!process.argv[2];
 
@@ -30,6 +31,7 @@ const isLive = !!process.argv[2];
     await updateTravelersPathsAndStops();
     await restartTravelers();
     await cleanProspectsConversationMonitored(isLive);
+    await updatDraftCampaignWithTagPlan()
     await updateWorldTemplateWithTagPlan();
     await updateWorldWithTagPlan();
     await updateCampaignWithTagPlan();

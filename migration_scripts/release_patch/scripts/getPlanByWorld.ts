@@ -1,7 +1,8 @@
 import { IWorld } from '../../../back/services/profesor/src/entities/World';
 import { IWorldTemplate } from '../../../back/services/profesor/src/entities/WorldTemplate';
+import { IDraftCampaign } from '../../../back/services/profesor/src/entities/DraftCampaign';
 
-export const getPlanByWorld = (world: IWorld | IWorldTemplate) => {
+export const getPlanByWorld = (world: IWorld | IWorldTemplate | any) => {
     let isAdvanced = false;
     let isBusiness = false
     let cptActions = 0
