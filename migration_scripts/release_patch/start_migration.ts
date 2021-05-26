@@ -1,5 +1,6 @@
 import { changeEveryoneToFreeTrial } from './scripts/change_everyone_to_free_trial';
 import { cleanStargate } from './scripts/clean_stargate';
+import { cleanProspectsConversationMonitored } from './scripts/is_monitored_conversation';
 import { restartTravelers } from './scripts/restart_travelers';
 import { sendDiscountCodeToPayers } from './scripts/send_discount_code_payers';
 
@@ -10,4 +11,5 @@ const isLive = !!process.argv[2];
     await changeEveryoneToFreeTrial(isLive);
     await cleanStargate(isLive);
     await restartTravelers();
+    await cleanProspectsConversationMonitored(isLive);
 })();
