@@ -105,8 +105,7 @@ export const sendDiscountCodeToPayers = async (isLive: boolean) => {
     const UserPermission = bouncerDatabase.model<any & mongoose.Document>('UserPermission', UserPermissionSchema);
 
     const users: Array<{ _id: string; email: string; firstName: string; lastName: string; language: string }> = await User.find(
-        { _id: '6068e35d62f9fd002289c6aa' },
-        // { hasPaid: true, isStaff: { $ne: true } },
+        { hasPaidBeta: true, isStaff: { $ne: true } },
         { email: 1, firstName: 1, lastName: 1, language: 1 },
     );
 
