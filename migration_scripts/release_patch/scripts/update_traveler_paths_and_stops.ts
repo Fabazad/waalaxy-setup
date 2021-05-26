@@ -173,11 +173,12 @@ export const updateTravelersPathsAndStops = async () => {
 
     console.log(`Found ${oldTravelersCount} travelers to update`);
 
-    const bulkSize = 1000;
+    const bulkSize = 100;
     let processedTravelersCount = 0;
     let endedWithErrors = 0;
 
     while (processedTravelersCount < oldTravelersCount) {
+        console.time();
         const oldTravelers: IOldTraveler[] = await OldTraveler.find(
             {
                 stops: {
@@ -221,7 +222,7 @@ export const updateTravelersPathsAndStops = async () => {
                                         stops,
                                         paths,
                                         world,
-                                        arrivalDate: new Date(history[0].time ?? createdAt ?? Date.now()).toISOString(),
+                                        arrivalDate: new Date(history[0]?.time ?? createdAt ?? Date.now()).toISOString(),
                                     },
                                 ],
                             },
@@ -233,6 +234,7 @@ export const updateTravelersPathsAndStops = async () => {
         processedTravelersCount += bulkSize > result.length ? result.length : bulkSize;
         endedWithErrors += result.filter((v) => v.status === 'rejected').length;
         console.log(`Executed queries ${processedTravelersCount}/${oldTravelersCount} (${(processedTravelersCount / oldTravelersCount) * 100}%)`);
+        console.timeEnd();
     }
     console.log(`${processedTravelersCount} processed travelers, ${endedWithErrors} updates ended with errors`);
 };

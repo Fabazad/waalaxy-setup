@@ -41,7 +41,7 @@ const UserSchema = new mongoose.Schema(
         waapiId: {
             type: String,
         },
-        hasPaid: { type: Boolean, required: false, default: false },
+        hasPaidBeta: { type: Boolean, required: false, default: false },
         hasBypass: { type: Boolean, required: false, default: false },
         freeTrial: {
             startDate: { type: Date },
@@ -105,7 +105,7 @@ export const sendDiscountCodeToPayers = async (isLive: boolean) => {
     const UserPermission = bouncerDatabase.model<any & mongoose.Document>('UserPermission', UserPermissionSchema);
 
     const users: Array<{ _id: string; email: string; firstName: string; lastName: string; language: string }> = await User.find(
-        { hasPaidBeta: true, isStaff: { $ne: true } },
+        { hasPaidBeta: true },
         { email: 1, firstName: 1, lastName: 1, language: 1 },
     );
 
@@ -159,5 +159,3 @@ export const sendDiscountCodeToPayers = async (isLive: boolean) => {
     console.log(results);
     console.log('Done');
 };
-
-sendDiscountCodeToPayers(true);

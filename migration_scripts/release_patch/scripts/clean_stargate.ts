@@ -40,6 +40,7 @@ const UserSchema = new mongoose.Schema(
             type: String,
         },
         hasPaid: { type: Boolean, required: false, default: false },
+        hasPaidBeta: { type: Boolean, required: false, default: false },
         hasBypass: { type: Boolean, required: false, default: false },
         freeTrial: {
             startDate: { type: Date },

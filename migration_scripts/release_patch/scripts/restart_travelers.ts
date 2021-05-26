@@ -77,7 +77,7 @@ const buildEventRequest = (
 const conditionPipeline = [
     {
         $match: {
-            'status.value': 'traveling',
+            'status.value': { $in: ['paused', 'traveling'] },
             'currentStop.status.value': 'waiting_for_validation',
             'currentStop.type': {
                 $in: [...linkedinActions, 'email', 'enrichment', 'webhook'],
@@ -169,6 +169,8 @@ export const restartTravelers = async () => {
         console.log(eventsCount);
 
         current += pageSize;
+
+        await new Promise((r) => setTimeout(r, 7500));
     }
     console.log('Done');
 };
