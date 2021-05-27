@@ -76,6 +76,7 @@ services:
             DOCUMENTATION_PASSWORD: admin
             LIFELINE_TOKEN: token
             ADMIN_API_KEY: 4aecf7c8-efae-42ce-8ba0-da8a89eb0044
+            SLEEP_TIME_UNIT: seconds
         ports:
             - '5001:5001'
         volumes:
@@ -305,6 +306,7 @@ services:
             DOCUMENTATION_USER: admin
             DOCUMENTATION_PASSWORD: admin
             MIRAGE_TOKEN: eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJleHBpcmF0aW9uRGF0ZSI6IjIxMjAtMDMtMzFUMTY6NDI6MjYuNDYzWiIsInBlcm1pc3Npb25zIjpbIlNhYVNUb2tlbiJdfQ.yCvExMyJ8CBvRsfjRsD6eAaQrajkjnj9mFlV3iP4S4A
+            PROSPECTIN_MIRAGE_TOKEN: eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJleHBpcmF0aW9uRGF0ZSI6IjIxMTktMTEtMTRUMTU6MTE6NTQuMzMxWiIsInBlcm1pc3Npb25zIjpbIlNhYVNUb2tlbiJdfQ.Q6cI6GBT77tbRxXQndwlNDAbeO1JtwfFUFPoDsWiois
         ports:
             - '5008:5008'
         volumes:

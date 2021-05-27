@@ -17,6 +17,7 @@
         "@waapi/onu": "^2.0.31",
         "axios": "^0.20.0",
         "dayjs": "^1.10.4",
+        "docker-compose": "^0.23.10",
         "dotenv": "^9.0.2",
         "fs-extra": "^9.1.0",
         "mongoose": "5.10.4",
