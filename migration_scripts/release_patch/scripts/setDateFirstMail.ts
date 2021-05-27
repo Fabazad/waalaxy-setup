@@ -65,7 +65,7 @@ const ActionHistorySchema = new Schema(
 );
 
 export const setDateFirstMailWithUsers = async () => {
-    console.log('Begin setDateFirstLinkedInActionWithUsers');
+    console.log('Begin setDateFirstMailWithUsers');
     const hermesDatabase = await loginToDatabase(process.env.HERMES_DATABASE!);
     const Metadata = hermesDatabase.model<any & Document>('Metadata', MetadataSchema);
     const ActionHistory = hermesDatabase.model<any & Document>('ActionHistory', ActionHistorySchema);
