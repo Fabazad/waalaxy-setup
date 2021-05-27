@@ -15,6 +15,7 @@ const setDateFirstMail = async (Metadata: any, ActionHistory: any) => {
                     },
                 },
                 {
+                    user: actionHistoryUser.toString(),
                     firstMailDate: date,
                 },
                 {

@@ -15,6 +15,7 @@ const setDateFirstLinkedInAction = async (Metadata: any, ActionHistory: any) => 
                     },
                 },
                 {
+                    user: actionHistoryUser.toString(),
                     firstLinkedInActionDate: date,
                 },
                 {
