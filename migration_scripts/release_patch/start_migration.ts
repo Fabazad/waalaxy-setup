@@ -26,6 +26,8 @@ const isLive = !!process.argv[2];
     // await updateCampaignWithTagPlan();
     // await setDateToUserWithProspect();
     // await changeProfileOccupationUndefined();
+    // await setDateFirstLinkedInActionWithUsers();
+    // await setDateFirstMailWithUsers();
     await updateTravelersPathsAndStops();
     await restartTravelers();
 })();
