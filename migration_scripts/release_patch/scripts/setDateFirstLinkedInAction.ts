@@ -7,31 +7,20 @@ const setDateFirstLinkedInAction = async (Metadata: any, ActionHistory: any) => 
     // @ts-ignore
     await Promise.all(
         actionHistoriesUsers.map(async (actionHistoryUser: string) => {
-            const metadataFounded = await Metadata.findOne({
-                user: actionHistoryUser,
-            });
-            if (!metadataFounded) {
-                await Metadata.create(
-                    {
-                        user: actionHistoryUser.toString(),
+            await Metadata.updateOne(
+                {
+                    user: actionHistoryUser.toString(),
+                    firstLinkedInActionDate: {
+                        $exists: false,
                     },
-                    {
-                        firstLinkedInActionDate: date,
-                    },
-                );
-            } else {
-                await Metadata.updateOne(
-                    {
-                        user: actionHistoryUser.toString(),
-                        firstLinkedInActionDate: {
-                            $exists: false,
-                        },
-                    },
-                    {
-                        firstLinkedInActionDate: date,
-                    },
-                );
-            }
+                },
+                {
+                    firstLinkedInActionDate: date,
+                },
+                {
+                    upsert: true,
+                },
+            );
         }),
     );
 };
