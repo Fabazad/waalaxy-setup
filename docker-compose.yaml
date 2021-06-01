@@ -140,6 +140,7 @@ services:
             DOCUMENTATION_USER: admin
             DOCUMENTATION_PASSWORD: admin
             GOULAG_URL: http://goulag:5002/graphql
+            BOUNCER_API_URL: http://bouncer:5008
             LIFELINE_TOKEN: token
         ports:
             - '5003:5003'
@@ -299,6 +300,7 @@ services:
             PORT: 5008
             REDIS_URL: redis://redis:6379
             OTTO_URL: ws://otto:6666
+            KAUPAONA_API_KEY: eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJuYW1lIjoid2FhbGF4eSIsImNyZWF0ZWREYXRlIjoxNjE4OTk4MDk5NDkwfQ.sddnQYapd2VBwXN6aOl2nPEGc8PwJt87xl_xbnfrmAo
             OTTO_TOKEN: eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJhdXRob3IiOiJib3VuY2VyIn0.rv0NYsD4M4rPfHvf96KiN0LuOriPyuJxqWVd1961xNc
             NODE_ENV: E2E
             MONGODB_URI: mongodb://mongo:27017/Bouncer
@@ -358,6 +360,7 @@ services:
             MONGODB_URI: mongodb://mongo:27017/Janus
             MONGODB_URI_TEST: mongodb://mongo:27017/JanusTest
             DOCUMENTATION_USER: admin
+            BOUNCER_URL: http://bouncer:5008
             DOCUMENTATION_PASSWORD: admin
             WEB_CONCURRENCY: 2
         ports:
