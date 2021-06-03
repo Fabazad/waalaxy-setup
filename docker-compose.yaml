@@ -112,6 +112,10 @@ services:
             DOCUMENTATION_USER: admin
             DOCUMENTATION_PASSWORD: admin
             LIFELINE_API_KEY: token
+            TRADUORA_URL: https://shakespeare-v2.herokuapp.com
+            TRADUORA_PROJECT_ID: baab9752-e91c-4a73-90a1-65d80caf6fb2
+            TRADUORA_CLIENT_ID: 21e06f2a-7169-4d5d-928d-69ee0bbdf0f2
+            TRADUORA_CLIENT_SECRET: eZx3AQr56PuHeF3tAlK3GjyB6Slqk8rx
         ports:
             - '5000:5000'
         volumes:
