@@ -180,20 +180,13 @@ const repositories: Repositories = {
         folderName: 'hawking',
         basePath: 'back/services',
     },
-    zola: {
-        url: 'git@github.com:Waapi-Pro/zola.git',
-        developingBranch: 'master',
-        setupCommand: 'npm install',
-        folderName: 'zola',
-        basePath: 'front/packages',
-    },
     'bouncer-client': {
         url: 'git@github.com:Waapi-Pro/bouncer-client.git',
         developingBranch: 'develop',
         setupCommand: 'npm install',
         folderName: 'bouncer-client',
         basePath: 'back/packages',
-    }
+    },
 };
 
 const execCommand = (command: string, options: ExecOptions): Promise<true> => {
