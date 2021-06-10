@@ -41,6 +41,7 @@ services:
             DOCUMENTATION_USER: admin
             PROFESOR_URL: http://profesor:5001
             DOCUMENTATION_PASSWORD: admin
+            BOUNCER_URL: http://bouncer:5008
             PROSPECTIN_URL: https://staging-prospectin-api.herokuapp.com
             PROSPECTIN_TOKEN: eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJfaWQiOiI1ZTgxZDc5MmQzYmZiMzAwMTdhOGQ0NjAiLCJsaW5rZWRpbklkIjoiODA0NzgyNzY1In0.PP_EByIAHezFb88FNIR41OQWEd26BNckGFIzItnbDec
         ports:
@@ -169,7 +170,6 @@ services:
             GOULAG_BASE_URL: http://goulag:5002/graphql
             OTTO_TOKEN: eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJhdXRob3IiOiJzdGFyZ2F0ZSJ9.y8VIfAsWL22nlpWMWKsv_9ebUCJ1xziQ1Qh6srjMTg8
             SECRET: kzenjf68zef/*zef-gergrege
-            SALT_TOKEN: kzenjf68zef/*zef-gergrege
             GOOGLE_CLIENT_ID: 141637350927-kfbhgp5p13tf9r5e9c2vlr7cid20m19u.apps.googleusercontent.com
             GOOGLE_CLIENT_SECRET: B29hgBJUFUOQF2tRsZtxeyPI
             MYSTIQUE_URL: http://localhost:3000
@@ -313,6 +313,7 @@ services:
             DOCUMENTATION_PASSWORD: admin
             MIRAGE_TOKEN: eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJleHBpcmF0aW9uRGF0ZSI6IjIxMjAtMDMtMzFUMTY6NDI6MjYuNDYzWiIsInBlcm1pc3Npb25zIjpbIlNhYVNUb2tlbiJdfQ.yCvExMyJ8CBvRsfjRsD6eAaQrajkjnj9mFlV3iP4S4A
             PROSPECTIN_MIRAGE_TOKEN: eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJleHBpcmF0aW9uRGF0ZSI6IjIxMTktMTEtMTRUMTU6MTE6NTQuMzMxWiIsInBlcm1pc3Npb25zIjpbIlNhYVNUb2tlbiJdfQ.Q6cI6GBT77tbRxXQndwlNDAbeO1JtwfFUFPoDsWiois
+            LIFELINE_TOKEN: token
         ports:
             - '5008:5008'
         volumes:
