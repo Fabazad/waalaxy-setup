@@ -10,6 +10,34 @@ dotEnv.config();
 const PAUSE_BETWEEN_BATCH = 0;
 const BATCH_SIZE = 1000;
 
+//@ts-ignore
+var dotize = dotize || {};
+
+//@ts-ignore
+dotize.parse = function (jsonobj, prefix) {
+    //@ts-ignore
+    var newobj = {};
+    //@ts-ignore
+    function recurse(o, p) {
+        for (var f in o) {
+            //@ts-ignore
+            var pre = p === undefined ? '' : p + '.';
+            //@ts-ignore
+            if (o[f] && typeof o[f] === 'object') {
+                //@ts-ignore
+                newobj = recurse(o[f], pre + f);
+                //@ts-ignore
+            } else {
+                //@ts-ignore
+                newobj[pre + f] = o[f];
+            }
+        }
+        //@ts-ignore
+        return newobj;
+    }
+    return recurse(jsonobj, prefix);
+};
+
 const getProfiles = (c: Connection, start: number) => ProfileModel(c).find({}).skip(start).limit(BATCH_SIZE).lean().exec();
 
 const createOrConditions = (profileData: Profile): { $or: {}[] } => ({
@@ -20,18 +48,20 @@ const createOrConditions = (profileData: Profile): { $or: {}[] } => ({
     ],
 });
 
-const findProspectWithCorrespondingEmbededProfile = async (c: Connection, profile: Profile): Promise<Prospect<Profile> | null> =>
-    ProspectModel(c)
+const findProspectWithCorrespondingEmbededProfile = async (c: Connection, profile: Profile): Promise<Prospect<Profile> | null> => {
+    return ProspectModel(c)
         .findOne({
             'profile._id': { $exists: true },
             ...createOrConditions(profile),
         })
         .exec();
+};
 
 const updateProspectProfileWithNewId = async (
     c: Connection,
     prospectId: Mongoose.Types.ObjectId,
     newId: Mongoose.Types.ObjectId,
+    profileData: Omit<Profile, '_id'>,
 ): Promise<Prospect | null> => {
     return ProspectModel(c)
         .findOneAndUpdate(
@@ -40,11 +70,13 @@ const updateProspectProfileWithNewId = async (
             },
             {
                 $set: {
-                    'profile._id': newId,
+                    //@ts-ignore
+                    profile: { _id: newId, ...profileData },
                 },
             },
             {
                 new: true,
+                useFindAndModify: true,
             },
         )
         .exec();
@@ -62,24 +94,26 @@ export const fixMismatchProfileId = async () => {
         const profilesBatch = await getProfiles(goulagDatabase, processedProfiles);
 
         const results = await Promise.all<boolean>(
-            profilesBatch.map(async (profile) => {
-                const prospect = await findProspectWithCorrespondingEmbededProfile(goulagDatabase, profile);
+            profilesBatch.map(async ({ _id: profileId, ...profile }) => {
+                const prospect = await findProspectWithCorrespondingEmbededProfile(goulagDatabase, { _id: profileId, ...profile });
 
                 if (!prospect) return false;
 
-                if (prospect.profile._id.toString() === profile._id.toString()) {
-                    return false;
-                }
+                // if (prospect.profile._id.toString() === profile._id.toString()) {
+                //     return false;
+                // }
+                // console.log(dotize.parse(profile));
 
                 const updatedProspect = await updateProspectProfileWithNewId(
                     goulagDatabase,
                     Mongoose.Types.ObjectId.createFromHexString(prospect._id.toString()),
-                    profile._id,
+                    profileId,
+                    profile,
                 );
 
                 if (!updatedProspect) return false;
 
-                if (updatedProspect.profile._id.toString() !== profile._id.toString()) {
+                if (updatedProspect.profile._id.toString() !== profileId.toString()) {
                     throw new Error('update failing');
                 }
 
