@@ -1,4 +1,4 @@
-import { Document, model, Schema } from 'mongoose';
+import { Connection, Document, model, Schema } from 'mongoose';
 import { historyNamesRecord, Prospect, Profile } from './interfaces';
 
 export const DropContactEnrichment = new Schema({
@@ -70,7 +70,7 @@ export const ProfileSchema = new Schema(
     { timestamps: true },
 );
 
-export const ProfileModel = model<Profile & Document>('Profile', ProfileSchema);
+export const ProfileModel = (c: Connection) => c.model<Profile & Document>('Profile', ProfileSchema);
 
 const CustomProfileSchema = new Schema({
     firstName: { type: Schema.Types.String },
@@ -136,4 +136,4 @@ const ProspectSchema = new Schema(
     { timestamps: true },
 );
 
-export const ProspectModel = model<Prospect & Document>('Prospect', ProspectSchema);
+export const ProspectModel = (c: Connection) => c.model<Prospect & Document>('Prospect', ProspectSchema);

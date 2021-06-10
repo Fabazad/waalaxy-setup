@@ -1,12 +1,16 @@
 import _ from 'lodash';
-import { Schema } from 'mongoose';
+import Mongoose, { Connection, Schema } from 'mongoose';
+import { loginToDatabase } from '../../../../mongoose';
 import { Profile, Prospect } from './interfaces';
 import { ProfileModel, ProspectModel } from './schemas';
+import dotEnv from 'dotenv';
 
-const PAUSE_BETWEEN_BATCH = 5 * 1000;
-const BATCH_SIZE = 100;
+dotEnv.config();
 
-const getProfiles = (start: number) => ProfileModel.find({}).skip(start).limit(BATCH_SIZE).lean().exec();
+const PAUSE_BETWEEN_BATCH = 0;
+const BATCH_SIZE = 1000;
+
+const getProfiles = (c: Connection, start: number) => ProfileModel(c).find({}).skip(start).limit(BATCH_SIZE).lean().exec();
 
 const createOrConditions = (profileData: Profile): { $or: {}[] } => ({
     $or: [
@@ -16,44 +20,62 @@ const createOrConditions = (profileData: Profile): { $or: {}[] } => ({
     ],
 });
 
-const findProspectWithCorrespondingEmbededProfile = async (profile: Profile): Promise<Prospect<Profile> | null> =>
-    ProspectModel.findOne({
-        'profile._id': { $exists: true },
-        ...createOrConditions(profile),
-    });
+const findProspectWithCorrespondingEmbededProfile = async (c: Connection, profile: Profile): Promise<Prospect<Profile> | null> =>
+    ProspectModel(c)
+        .findOne({
+            'profile._id': { $exists: true },
+            ...createOrConditions(profile),
+        })
+        .exec();
 
-const updateProspectProfileWithNewId = (prospectId: Schema.Types.ObjectId, newId: Schema.Types.ObjectId): Promise<Prospect | null> =>
-    ProspectModel.updateOne(
-        {
-            _id: prospectId,
-        },
-        {
-            $set: {
-                'profile._id': newId,
+const updateProspectProfileWithNewId = async (
+    c: Connection,
+    prospectId: Mongoose.Types.ObjectId,
+    newId: Mongoose.Types.ObjectId,
+): Promise<Prospect | null> => {
+    return ProspectModel(c)
+        .findOneAndUpdate(
+            {
+                _id: prospectId,
             },
-        },
-    ).exec();
+            {
+                $set: {
+                    'profile._id': newId,
+                },
+            },
+            {
+                new: true,
+            },
+        )
+        .exec();
+};
 
 export const fixMismatchProfileId = async () => {
     console.log('Starting fixMismatchProfileId');
+    const goulagDatabase = await loginToDatabase(process.env.GOULAG_DATABASE!);
 
-    const profilesCount = await ProfileModel.countDocuments();
+    const profilesCount = await ProfileModel(goulagDatabase).countDocuments();
+    console.log(`Found ${profilesCount} Profiles`);
     let processedProfiles = 0;
 
     while (processedProfiles < profilesCount) {
-        const profilesBatch = await getProfiles(processedProfiles);
+        const profilesBatch = await getProfiles(goulagDatabase, processedProfiles);
 
         const results = await Promise.all<boolean>(
             profilesBatch.map(async (profile) => {
-                const prospect = await findProspectWithCorrespondingEmbededProfile(profile);
+                const prospect = await findProspectWithCorrespondingEmbededProfile(goulagDatabase, profile);
+
+                if (!prospect) return false;
 
                 if (prospect.profile._id.toString() === profile._id.toString()) {
                     return false;
                 }
 
-                if (!prospect) return false;
-
-                const updatedProspect = await updateProspectProfileWithNewId(new Schema.Types.ObjectId(prospect._id.toString()), profile._id);
+                const updatedProspect = await updateProspectProfileWithNewId(
+                    goulagDatabase,
+                    Mongoose.Types.ObjectId.createFromHexString(prospect._id.toString()),
+                    profile._id,
+                );
 
                 if (!updatedProspect) return false;
 
@@ -80,4 +102,10 @@ export const fixMismatchProfileId = async () => {
             )}%)`,
         );
     }
+
+    console.log('exiting');
+
+    process.exit(1);
 };
+
+fixMismatchProfileId();
