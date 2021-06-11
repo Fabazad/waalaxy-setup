@@ -187,6 +187,13 @@ const repositories: Repositories = {
         folderName: 'bouncer-client',
         basePath: 'back/packages',
     },
+    'shiva-client': {
+        url: 'git@github.com:Waapi-Pro/shiva-client.git',
+        developingBranch: 'develop',
+        setupCommand: 'npm install',
+        folderName: 'shiva-client',
+        basePath: 'back/packages',
+    },
 };
 
 const execCommand = (command: string, options: ExecOptions): Promise<true> => {
