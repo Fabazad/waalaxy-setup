@@ -6,7 +6,7 @@ import { ProfileModel, ProspectModel } from './schemas';
 
 dotEnv.config();
 
-const PAUSE_BETWEEN_BATCH = 1000;
+const PAUSE_BETWEEN_BATCH = 0;
 const BATCH_SIZE = 1000;
 
 //@ts-ignore
@@ -58,25 +58,35 @@ const findProspectsWithCorrespondingEmbededProfile = async (c: Connection, profi
 
 const updateProspectsProfileWithNewId = async (
     c: Connection,
-    prospectIds: Array<Mongoose.Types.ObjectId>,
-    newId: Mongoose.Types.ObjectId,
-    profileData: Omit<Profile, '_id'>,
-): Promise<Array<Prospect>> => {
-    await ProspectModel(c)
-        .updateMany(
-            { _id: { $in: prospectIds } },
-            {
-                $set: {
-                    //@ts-ignore
-                    profile: { _id: newId, ...profileData },
+    data: Array<{
+        prospectIds: Array<Mongoose.Types.ObjectId>;
+        newId: Mongoose.Types.ObjectId;
+        profileData: Omit<Profile, '_id'>;
+    }>,
+): Promise<Array<{ profileId: Mongoose.Types.ObjectId; prospectIds: Array<Mongoose.Types.ObjectId>; newProspects: Array<Prospect> }>> => {
+    await ProspectModel(c).bulkWrite(
+        data.map(({ prospectIds, newId, profileData }) => ({
+            updateMany: {
+                filter: { _id: { $in: prospectIds } },
+                update: {
+                    $set: {
+                        //@ts-ignore
+                        profile: { _id: newId, ...profileData },
+                    },
                 },
             },
-        )
-        .exec();
+        })),
+    );
 
-    return ProspectModel(c)
-        .find({ _id: { $in: prospectIds } })
-        .exec();
+    return Promise.all(
+        data.map(async (d) => ({
+            profileId: d.newId,
+            prospectIds: d.prospectIds,
+            newProspects: await ProspectModel(c)
+                .find({ _id: { $in: d.prospectIds } })
+                .exec(),
+        })),
+    );
 };
 
 export const fixMismatchProfileId = async () => {
@@ -91,7 +101,7 @@ export const fixMismatchProfileId = async () => {
     while (processedProfiles < profilesCount) {
         const profilesBatch = await getProfiles(goulagDatabase, processedProfiles);
 
-        const results = await Promise.all<boolean | 'no_prospects'>(
+        const results = await Promise.all(
             profilesBatch.map(async ({ _id: profileId, ...profile }) => {
                 const prospects = await findProspectsWithCorrespondingEmbededProfile(goulagDatabase, { _id: profileId, ...profile });
 
@@ -101,24 +111,33 @@ export const fixMismatchProfileId = async () => {
                     if (p.profile._id.toString() !== profileId.toString()) nbMissmatch += 1;
                 });
 
-                const updatedProspects = await updateProspectsProfileWithNewId(
-                    goulagDatabase,
-                    prospects.map((prospect) => Mongoose.Types.ObjectId.createFromHexString(prospect._id.toString())),
-                    profileId,
-                    profile,
-                );
-
-                if (updatedProspects.length !== prospects.length) return false;
-
-                updatedProspects.forEach((p) => {
-                    if (p.profile._id.toString() !== profileId.toString()) {
-                        throw new Error('update failing');
-                    }
-                });
-
-                return true;
+                return { prospects, profileId, profile };
             }),
         );
+
+        const noProspects = results.filter((r) => r === 'no_prospects');
+        const success = results.filter((r) => r !== 'no_prospects') as Array<{
+            prospects: Prospect<Profile>[];
+            profileId: Mongoose.Types.ObjectId;
+            profile: Profile;
+        }>;
+
+        const updateRes = await updateProspectsProfileWithNewId(
+            goulagDatabase,
+            success.map((r) => ({
+                newId: r.profileId,
+                profileData: r.profile,
+                prospectIds: r.prospects.map((p) => Mongoose.Types.ObjectId.createFromHexString(p._id.toString())),
+            })),
+        );
+
+        updateRes.forEach((r) => {
+            r.newProspects.forEach((p) => {
+                if (p.profile._id.toString() !== r.profileId.toString()) {
+                    throw new Error(`update failing for prospect ${p._id.toString()} with profile ${r.profileId.toString()}`);
+                }
+            });
+        });
 
         processedProfiles += BATCH_SIZE;
 
@@ -126,8 +145,7 @@ export const fixMismatchProfileId = async () => {
             setTimeout(r, PAUSE_BETWEEN_BATCH);
         });
 
-        console.log(`${results.filter((r) => !r).length} errors`);
-        console.log(`${results.filter((r) => r === 'no_prospects').length} profiles without prospects`);
+        console.log(`${noProspects.length} profiles without prospects`);
 
         console.log('Summary:', nbMissmatch, 'missmatch');
         console.log(
