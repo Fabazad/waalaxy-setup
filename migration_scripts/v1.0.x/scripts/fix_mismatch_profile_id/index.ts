@@ -1,13 +1,12 @@
-import _ from 'lodash';
-import Mongoose, { Connection, Schema } from 'mongoose';
+import dotEnv from 'dotenv';
+import Mongoose, { Connection } from 'mongoose';
 import { loginToDatabase } from '../../../../mongoose';
 import { Profile, Prospect } from './interfaces';
 import { ProfileModel, ProspectModel } from './schemas';
-import dotEnv from 'dotenv';
 
 dotEnv.config();
 
-const PAUSE_BETWEEN_BATCH = 0;
+const PAUSE_BETWEEN_BATCH = 1000;
 const BATCH_SIZE = 1000;
 
 //@ts-ignore
@@ -48,37 +47,35 @@ const createOrConditions = (profileData: Profile): { $or: {}[] } => ({
     ],
 });
 
-const findProspectWithCorrespondingEmbededProfile = async (c: Connection, profile: Profile): Promise<Prospect<Profile> | null> => {
+const findProspectsWithCorrespondingEmbededProfile = async (c: Connection, profile: Profile): Promise<Array<Prospect<Profile>>> => {
     return ProspectModel(c)
-        .findOne({
+        .find({
             'profile._id': { $exists: true },
             ...createOrConditions(profile),
         })
         .exec();
 };
 
-const updateProspectProfileWithNewId = async (
+const updateProspectsProfileWithNewId = async (
     c: Connection,
-    prospectId: Mongoose.Types.ObjectId,
+    prospectIds: Array<Mongoose.Types.ObjectId>,
     newId: Mongoose.Types.ObjectId,
     profileData: Omit<Profile, '_id'>,
-): Promise<Prospect | null> => {
-    return ProspectModel(c)
-        .findOneAndUpdate(
-            {
-                _id: prospectId,
-            },
+): Promise<Array<Prospect>> => {
+    await ProspectModel(c)
+        .updateMany(
+            { _id: { $in: prospectIds } },
             {
                 $set: {
                     //@ts-ignore
                     profile: { _id: newId, ...profileData },
                 },
             },
-            {
-                new: true,
-                useFindAndModify: true,
-            },
         )
+        .exec();
+
+    return ProspectModel(c)
+        .find({ _id: { $in: prospectIds } })
         .exec();
 };
 
@@ -89,33 +86,35 @@ export const fixMismatchProfileId = async () => {
     const profilesCount = await ProfileModel(goulagDatabase).countDocuments();
     console.log(`Found ${profilesCount} Profiles`);
     let processedProfiles = 0;
+    let nbMissmatch = 0;
 
     while (processedProfiles < profilesCount) {
         const profilesBatch = await getProfiles(goulagDatabase, processedProfiles);
 
-        const results = await Promise.all<boolean>(
+        const results = await Promise.all<boolean | 'no_prospects'>(
             profilesBatch.map(async ({ _id: profileId, ...profile }) => {
-                const prospect = await findProspectWithCorrespondingEmbededProfile(goulagDatabase, { _id: profileId, ...profile });
+                const prospects = await findProspectsWithCorrespondingEmbededProfile(goulagDatabase, { _id: profileId, ...profile });
 
-                if (!prospect) return false;
+                if (prospects.length === 0) return 'no_prospects';
 
-                // if (prospect.profile._id.toString() === profile._id.toString()) {
-                //     return false;
-                // }
-                // console.log(dotize.parse(profile));
+                prospects.forEach((p) => {
+                    if (p.profile._id.toString() !== profileId.toString()) nbMissmatch += 1;
+                });
 
-                const updatedProspect = await updateProspectProfileWithNewId(
+                const updatedProspects = await updateProspectsProfileWithNewId(
                     goulagDatabase,
-                    Mongoose.Types.ObjectId.createFromHexString(prospect._id.toString()),
+                    prospects.map((prospect) => Mongoose.Types.ObjectId.createFromHexString(prospect._id.toString())),
                     profileId,
                     profile,
                 );
 
-                if (!updatedProspect) return false;
+                if (updatedProspects.length !== prospects.length) return false;
 
-                if (updatedProspect.profile._id.toString() !== profileId.toString()) {
-                    throw new Error('update failing');
-                }
+                updatedProspects.forEach((p) => {
+                    if (p.profile._id.toString() !== profileId.toString()) {
+                        throw new Error('update failing');
+                    }
+                });
 
                 return true;
             }),
@@ -127,8 +126,10 @@ export const fixMismatchProfileId = async () => {
             setTimeout(r, PAUSE_BETWEEN_BATCH);
         });
 
-        console.log(`${results.filter((r) => r).length} mismatchs found`);
+        console.log(`${results.filter((r) => !r).length} errors`);
+        console.log(`${results.filter((r) => r === 'no_prospects').length} profiles without prospects`);
 
+        console.log('Summary:', nbMissmatch, 'missmatch');
         console.log(
             `Processed ${processedProfiles}/${profilesCount} profiles. (${Math.min(
                 Math.round((processedProfiles / profilesCount) * 100 * 100) / 100,
