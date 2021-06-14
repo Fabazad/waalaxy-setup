@@ -3,6 +3,7 @@ import Mongoose, { Connection } from 'mongoose';
 import { loginToDatabase } from '../../../../mongoose';
 import { Profile, Prospect } from './interfaces';
 import { ProfileModel, ProspectModel } from './schemas';
+import { mergeProfiles } from './utils';
 
 dotEnv.config();
 
@@ -39,11 +40,15 @@ dotize.parse = function (jsonobj, prefix) {
 
 const getProfiles = (c: Connection, start: number) => ProfileModel(c).find({}).skip(start).limit(BATCH_SIZE).lean().exec();
 
-const createOrConditions = (profileData: Profile): { $or: {}[] } => ({
+const createOrConditions = (profileData: Profile, collection: 'profile' | 'prospect'): { $or: {}[] } => ({
     $or: [
-        ...(profileData.memberId !== undefined ? [{ 'profile.memberId': profileData.memberId }] : []),
-        ...(profileData.publicIdentifier !== undefined ? [{ 'profile.publicIdentifier': profileData.publicIdentifier }] : []),
-        ...(profileData.salesMemberId !== undefined ? [{ 'profile.salesMemberId': profileData.salesMemberId }] : []),
+        ...(profileData.memberId !== undefined ? [{ [collection === 'prospect' ? 'profile.memberId' : 'memberId']: profileData.memberId }] : []),
+        ...(profileData.publicIdentifier !== undefined
+            ? [{ [collection === 'prospect' ? 'profile.publicIdentifier' : 'publicIdentifier']: profileData.publicIdentifier }]
+            : []),
+        ...(profileData.salesMemberId !== undefined
+            ? [{ [collection === 'prospect' ? 'profile.salesMemberId' : 'salesMemberId']: profileData.salesMemberId }]
+            : []),
     ],
 });
 
@@ -51,7 +56,7 @@ const findProspectsWithCorrespondingEmbededProfile = async (c: Connection, profi
     return ProspectModel(c)
         .find({
             'profile._id': { $exists: true },
-            ...createOrConditions(profile),
+            ...createOrConditions(profile, 'prospect'),
         })
         .exec();
 };
@@ -63,7 +68,14 @@ const updateProspectsProfileWithNewId = async (
         newId: Mongoose.Types.ObjectId;
         profileData: Omit<Profile, '_id'>;
     }>,
-): Promise<Array<{ profileId: Mongoose.Types.ObjectId; prospectIds: Array<Mongoose.Types.ObjectId>; newProspects: Array<Prospect> }>> => {
+): Promise<
+    Array<{
+        profileId: Mongoose.Types.ObjectId;
+        prospectIds: Array<Mongoose.Types.ObjectId>;
+        newProspects: Array<Prospect>;
+        profileData: Omit<Profile, '_id'>;
+    }>
+> => {
     await ProspectModel(c).bulkWrite(
         data.map(({ prospectIds, newId, profileData }) => ({
             updateMany: {
@@ -82,11 +94,43 @@ const updateProspectsProfileWithNewId = async (
         data.map(async (d) => ({
             profileId: d.newId,
             prospectIds: d.prospectIds,
+            profileData: d.profileData,
             newProspects: await ProspectModel(c)
                 .find({ _id: { $in: d.prospectIds } })
                 .exec(),
         })),
     );
+};
+
+const handleProfilesDuplicates = async ({
+    c,
+    existingProfiles,
+    profileData,
+    profileId,
+}: {
+    c: Connection;
+    existingProfiles: Array<Profile>;
+    profileData: Omit<Profile, '_id'>;
+    profileId: Mongoose.Types.ObjectId;
+}) => {
+    const mergedProfile = mergeProfiles([...existingProfiles, profileData]);
+    if (!mergedProfile)
+        throw new Error(`merge profiles failed for ${profileId.toString()} and ${existingProfiles.map((p) => p._id.toString()).join(',')}`);
+    delete mergedProfile._id;
+    const profile = await ProfileModel(c).create(mergedProfile);
+    await Promise.all([
+        ProspectModel(c).updateMany(
+            {
+                'profile._id': { $in: existingProfiles.map((p) => p._id.toString()) },
+            },
+            {
+                $set: { profile },
+            },
+        ),
+        ProfileModel(c).deleteMany({
+            _id: { $in: existingProfiles.map((p) => p._id.toString()) },
+        }),
+    ]);
 };
 
 export const fixMismatchProfileId = async () => {
@@ -97,9 +141,10 @@ export const fixMismatchProfileId = async () => {
     console.log(`Found ${profilesCount} Profiles`);
     let processedProfiles = 0;
     let nbMissmatch = 0;
+    const SKIP = 44000;
 
-    while (processedProfiles < profilesCount) {
-        const profilesBatch = await getProfiles(goulagDatabase, processedProfiles);
+    while (processedProfiles < profilesCount - SKIP) {
+        const profilesBatch = await getProfiles(goulagDatabase, processedProfiles + SKIP);
 
         const results = await Promise.all(
             profilesBatch.map(async ({ _id: profileId, ...profile }) => {
@@ -131,13 +176,21 @@ export const fixMismatchProfileId = async () => {
             })),
         );
 
-        updateRes.forEach((r) => {
-            r.newProspects.forEach((p) => {
+        for await (const r of updateRes) {
+            for await (const p of r.newProspects) {
                 if (p.profile._id.toString() !== r.profileId.toString()) {
-                    throw new Error(`update failing for prospect ${p._id.toString()} with profile ${r.profileId.toString()}`);
+                    console.log(`update failing for prospect ${p._id.toString()} with profile ${r.profileId.toString()}`);
+                    const existingProfiles = await ProfileModel(goulagDatabase)
+                        .find(createOrConditions({ ...r.profileData, _id: r.profileId.toString() }, 'profile'))
+                        .lean()
+                        .exec();
+                    if (existingProfiles.length <= 1)
+                        console.log(`update failing for prospect ${p._id.toString()} with profile ${r.profileId.toString()}, no profile duplicate`);
+
+                    await handleProfilesDuplicates({ c: goulagDatabase, profileData: r.profileData, profileId: r.profileId, existingProfiles });
                 }
-            });
-        });
+            }
+        }
 
         processedProfiles += BATCH_SIZE;
 
