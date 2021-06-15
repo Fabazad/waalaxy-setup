@@ -59,7 +59,7 @@ const updateProspectBatchOriginWithoutProspectList = async (c: Connection, origi
     );
 
 export const updateOriginWithProspectListId = async () => {
-    console.log('Starting fixMismatchProfileId');
+    console.log('Starting updateOriginWithProspectListId');
     const [goulagDatabase, profesorDatabase] = await Promise.all([
         loginToDatabase(process.env.GOULAG_DATABASE!),
         loginToDatabase(process.env.PROFESOR_DATABASE!),
