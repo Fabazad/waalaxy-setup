@@ -79,14 +79,20 @@ export const updateOriginWithProspectListId = async () => {
             originsBatch.map(async (origin) => {
                 const travelersFromOrigin = await getTravelersWithMatchingOrigin(profesorDatabase, origin._id);
 
-                if (travelersFromOrigin.length === 0) return false;
+                if (travelersFromOrigin.length === 0) {
+                    console.log('Origin without travelers');
+                    return false;
+                }
 
                 const matchingProspects = await getProspects(
                     goulagDatabase,
                     travelersFromOrigin.map((t) => t.prospect),
                 );
 
-                if (matchingProspects.length === 0) return false;
+                if (matchingProspects.length === 0) {
+                    console.log('Travelers without matching prospects');
+                    return false;
+                }
 
                 const prospectListIds = uniq(matchingProspects.map((prospect) => prospect.prospectList.toString()));
 
