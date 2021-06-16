@@ -1,4 +1,3 @@
-import { Connection } from 'mongoose';
 import { loginToDatabase } from '../../../../mongoose';
 import {EnrichmentModel, ProspectModel} from './schemas';
 import dotEnv from 'dotenv';
@@ -6,8 +5,6 @@ import dotEnv from 'dotenv';
 dotEnv.config();
 
 const BATCH_SIZE = 1000;
-
-const getProspects = (c: Connection, start: number) => ProspectModel(c).find({}).skip(start).limit(BATCH_SIZE).lean().exec();
 
 export const fixProspectHasBeenEnriched = async () => {
     console.log('Starting fixProspectHasBeenEnriched');
@@ -47,43 +44,20 @@ export const fixProspectHasBeenEnriched = async () => {
             },
             prospectList,
             user,
-            hasBeenEnriched: true
-        })
-        await EnrichmentModel(enutrofDatabase).create({
-            prospect: prospect2._id.toString(),
-            user,
-            status: "processed",
-            requestId: "atygpbkbjyyowez",
-            dataToEnrich: {},
-            enrichementResult: {}
         })
     }
 
-    const prospectsCount = await ProspectModel(goulagDatabase).countDocuments();
-    console.log(`Found ${prospectsCount} Prospects`);
+    const enrichmentsCount = await EnrichmentModel(enutrofDatabase).countDocuments();
+    console.log(`Found ${enrichmentsCount} Prospects`);
     let processedProspects = 0;
 
-    while (processedProspects < prospectsCount) {
-        const prospectsBatch = await getProspects(goulagDatabase, processedProspects);
-
-        const enrichments = await EnrichmentModel(enutrofDatabase).find({
-            prospect: { $in: prospectsBatch.map((p) => p._id.toString()) },
-            status: "processed"
-        });
+    while (processedProspects < enrichmentsCount) {
+        const enrichments = await EnrichmentModel(enutrofDatabase).find({ status: "processed" }).skip(processedProspects).limit(BATCH_SIZE).lean().exec()
 
         // @ts-ignore
         const enrichedProspectIds = [...new Set(enrichments.map(e => e.prospect.toString()))];
 
         const bulks = enrichedProspectIds.reduce<Array<any>>((res, prospectId) => {
-            const prospect = prospectsBatch.find(p => p._id.toString() === prospectId);
-
-            if (prospect === undefined) {
-                console.log("Could not find prospect " + prospectId);
-                return res;
-            }
-
-            if (prospect.hasBeenEnriched === true) return res
-
             const bulk = {
                 updateOne: {
                     filter: {_id: prospectId},
@@ -98,11 +72,9 @@ export const fixProspectHasBeenEnriched = async () => {
 
         processedProspects += BATCH_SIZE;
 
-        console.log(`${bulks.length} enrichments`);
-
         console.log(
-            `Processed ${processedProspects}/${prospectsCount} prospects. (${Math.min(
-                Math.round((processedProspects / prospectsCount) * 100 * 100) / 100,
+            `Processed ${processedProspects}/${enrichmentsCount} enrichments. (${Math.min(
+                Math.round((processedProspects / enrichmentsCount) * 100 * 100) / 100,
                 100,
             )}%)`,
         );
