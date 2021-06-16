@@ -3,9 +3,11 @@ import Mongoose, { Connection, Schema } from 'mongoose';
 import { loginToDatabase } from '../../../../mongoose';
 import { OriginModel, ProspectModel, TravelerModel } from './schemas';
 import { uniq } from 'lodash';
+import { appendFile } from 'fs';
+import { resolve, join } from 'path';
 dotEnv.config();
 
-const BATCH_SIZE = 100;
+const BATCH_SIZE = 10;
 const PAUSE_BETWEEN_BATCH = 0;
 
 const countProspectBatchOriginWithoutProspectList = (c: Connection) =>
@@ -42,11 +44,16 @@ const getTravelersWithMatchingOrigin = (c: Connection, origin: Mongoose.Schema.T
         .limit(20);
 
 const getProspects = (c: Connection, prospectIds: string[]) =>
-    ProspectModel(c).find({
-        _id: {
-            $in: prospectIds,
-        },
-    });
+    ProspectModel(c)
+        .find({
+            _id: {
+                $in: prospectIds,
+            },
+        })
+        .select({
+            _id: true,
+            prospectList: true,
+        });
 
 const updateProspectBatchOriginWithoutProspectList = async (c: Connection, originId: Schema.Types.ObjectId, prospectListId: string) =>
     OriginModel(c).updateOne(
@@ -97,12 +104,24 @@ export const updateOriginWithProspectListId = async () => {
                 const prospectListIds = uniq(matchingProspects.map((prospect) => prospect.prospectList.toString()));
 
                 if (prospectListIds.length !== 1) {
-                    throw new Error(` mismatching prospectList of matching prospects: ${prospectListIds.length}`);
+                    console.log('prospectListIds', prospectListIds);
+                    console.log(` mismatching prospectList of matching prospects: ${prospectListIds.length}`);
+                    await new Promise((r, rj) => {
+                        appendFile(
+                            resolve(join(__dirname, '/origin_mismatch.log')),
+                            `-------------------${new Date().toUTCString()}-------------------\norigin: ${origin._id.toString()}\nprospectListIds: ${prospectListIds.toString()}\n`,
+                            (err) => {
+                                if (err) rj(err);
+                                else r(true);
+                            },
+                        );
+                    });
+                    return false;
+                } else {
+                    await updateProspectBatchOriginWithoutProspectList(profesorDatabase, origin._id, prospectListIds[0]);
+
+                    return true;
                 }
-
-                await updateProspectBatchOriginWithoutProspectList(profesorDatabase, origin._id, prospectListIds[0]);
-
-                return true;
             }),
         );
 
