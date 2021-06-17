@@ -5,6 +5,7 @@ import { OriginModel, ProspectModel, TravelerModel } from './schemas';
 import { uniq } from 'lodash';
 import { appendFile } from 'fs';
 import { resolve, join } from 'path';
+import { ITraveler, Prospect } from './interfaces';
 dotEnv.config();
 
 const BATCH_SIZE = 10;
@@ -40,7 +41,7 @@ const getTravelersWithMatchingOrigin = (c: Connection, origin: Mongoose.Schema.T
                 $exists: true,
             },
         })
-        .select('prospect origin')
+        .select('_id prospect origin')
         .limit(20);
 
 const getProspects = (c: Connection, prospectIds: string[]) =>
@@ -63,6 +64,20 @@ const updateProspectBatchOriginWithoutProspectList = async (c: Connection, origi
         {
             prospectList: prospectListId,
         },
+    );
+
+const separateProspectWithIdFromProspectObject = (travelers: ITraveler[]): [string[], Prospect[]] =>
+    travelers.reduce(
+        ([prospectIds, prospectObjects], val) => {
+            if (typeof val.prospect === 'string') {
+                prospectIds.push(val.prospect);
+            } else {
+                prospectObjects.push(val.prospect);
+            }
+
+            return [prospectIds, prospectObjects];
+        },
+        [[], []] as [string[], Prospect[]],
     );
 
 export const updateOriginWithProspectListId = async () => {
@@ -91,17 +106,19 @@ export const updateOriginWithProspectListId = async () => {
                     return false;
                 }
 
-                const matchingProspects = await getProspects(
-                    goulagDatabase,
-                    travelersFromOrigin.map((t) => t.prospect),
-                );
+                const [prospectIds, prospectsObjects] = separateProspectWithIdFromProspectObject(travelersFromOrigin);
 
-                if (matchingProspects.length === 0) {
+                const matchingProspects = await getProspects(goulagDatabase, prospectIds);
+
+                if ([...matchingProspects, ...prospectsObjects].length === 0) {
                     console.log('Travelers without matching prospects');
                     return false;
                 }
 
-                const prospectListIds = uniq(matchingProspects.map((prospect) => prospect.prospectList.toString()));
+                const prospectListIds = uniq([
+                    ...prospectsObjects.map((p) => p.prospectList.toString()),
+                    ...matchingProspects.map((prospect) => prospect.prospectList.toString()),
+                ]);
 
                 if (prospectListIds.length !== 1) {
                     console.log('prospectListIds', prospectListIds);

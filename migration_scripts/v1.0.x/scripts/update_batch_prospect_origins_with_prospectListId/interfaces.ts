@@ -168,7 +168,7 @@ export const TRAVELER_STATUSES = ['traveling', 'paused', 'stopped', 'error', 'fi
 
 export type TravelerStatus = { value: typeof TRAVELER_STATUSES[number]; reason?: string };
 
-export declare type ITraveler<A = Schema.Types.ObjectId, B = Schema.Types.ObjectId, C = Schema.Types.ObjectId, D = string> = {
+export declare type ITraveler<A = Schema.Types.ObjectId, B = Schema.Types.ObjectId, C = Schema.Types.ObjectId, D = string | Prospect> = {
     campaign: A;
     world: B;
     origin: C;
