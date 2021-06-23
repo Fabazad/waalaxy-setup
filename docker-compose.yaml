@@ -68,7 +68,7 @@ services:
             SHIVA_BASE_URL: http://shiva:5003
             ENUTROF_BASE_URL: http://enutrof:5005
             HERMES_BASE_URL: http://hermes:5004
-            BOUNCER_URL: http://bouncer:5008
+            BOUNCER_API_URL: http://bouncer:5008
             JANUS_URL: http://janus:5010
             NODE_ENV: E2E
             MONGODB_URI: mongodb://mongo:27017/Profesor
