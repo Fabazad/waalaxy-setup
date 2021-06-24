@@ -18,6 +18,7 @@ services:
             DOCUMENTATION_PASSWORD: admin
         ports:
             - '6666:6666'
+            - '9229:9229'
         volumes:
             - ./back/services/otto:/usr/src/otto
         depends_on:
@@ -98,13 +99,13 @@ services:
             REDIS_URL: redis://redis:6379
             OTTO_URL: ws://otto:6666
             OTTO_TOKEN: eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJhdXRob3IiOiJzdGFyZ2F0ZSJ9.y8VIfAsWL22nlpWMWKsv_9ebUCJ1xziQ1Qh6srjMTg8
-            GOULAG_URL: goulag:5002
-            PROFESOR_URL: profesor:5001
-            SHIVA_URL: shiva:5003
-            HERMES_URL: hermes:5004
-            VOLTAIRE_URL: voltaire:5006
-            ZILEAN_URL: zilean:5007
-            JANUS_URL: janus:5010
+            GOULAG_URL: http://goulag:5002
+            PROFESOR_URL: http://profesor:5001
+            SHIVA_URL: http://shiva:5003
+            HERMES_URL: http://hermes:5004
+            VOLTAIRE_URL: http://voltaire:5006
+            ZILEAN_URL: http://zilean:5007
+            JANUS_URL: http://janus:5010
             BOUNCER_URL: http://bouncer:5008
             HAWKING_URL: http://hawking:5009
             NODE_ENV: E2E
