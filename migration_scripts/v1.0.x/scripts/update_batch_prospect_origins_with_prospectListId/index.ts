@@ -31,6 +31,7 @@ const findProspectBatchOriginWithoutProspectList = (c: Connection, start: number
         })
         .skip(start)
         .limit(BATCH_SIZE)
+        .sort({ _id: -1 })
         .exec();
 
 const getTravelersWithMatchingOrigin = (c: Connection, origin: Mongoose.Schema.Types.ObjectId) =>
@@ -96,7 +97,7 @@ export const updateOriginWithProspectListId = async () => {
 
     while (processedOrigins < originWithoutProspectListFieldCount) {
         const originsBatch = await findProspectBatchOriginWithoutProspectList(profesorDatabase, processedOrigins);
-
+        // console.log('originsBatch', originsBatch);
         const results = await Promise.all(
             originsBatch.map(async (origin) => {
                 const travelersFromOrigin = await getTravelersWithMatchingOrigin(profesorDatabase, origin._id);
@@ -123,6 +124,13 @@ export const updateOriginWithProspectListId = async () => {
                 if (prospectListIds.length !== 1) {
                     console.log('prospectListIds', prospectListIds);
                     console.log(` mismatching prospectList of matching prospects: ${prospectListIds.length}`);
+                    // asc _id sort
+                    prospectListIds.sort((a, b) => parseInt(a, 16) - parseInt(b, 16));
+
+                    if (prospectListIds[prospectListIds.length - 1]) {
+                        await updateProspectBatchOriginWithoutProspectList(profesorDatabase, origin._id, prospectListIds[prospectListIds.length - 1]);
+                    }
+
                     await new Promise((r, rj) => {
                         appendFile(
                             resolve(join(__dirname, '/origin_mismatch.log')),
