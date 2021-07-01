@@ -181,6 +181,7 @@ services:
             DOCUMENTATION_USER: admin
             DOCUMENTATION_PASSWORD: admin
             SALT_TOKEN: kzenj62-f68zef/*zef-g:th1ge4
+            LIFELINE_TOKEN: token
         ports:
             - '5004:5004'
         volumes:
