@@ -312,6 +312,7 @@ services:
             NODE_ENV: E2E
             MONGODB_URI: mongodb://mongo:27017/Bouncer
             MONGODB_URI_TEST: mongodb://mongo:27017/BouncerTest
+            WAAPI_API_TOKEN: eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJleHBpcmF0aW9uRGF0ZSI6IjI5OTktMTItMzFUMjM6NTk6NTkuOTk5WiIsInNhbHQiOiJub25lIiwianRpIjoiMzhlMzM5ZGQtNTY0Zi00ZGIyLTk3OTAtMjllNmJkMTQ0ZTk5IiwiaWF0IjoxNjAyMDY2NDg4LCJleHAiOjE2MDIwNzAwODh9.D654ITgsba7ffui-T4_4Pa1CtkI7nEEJkWcMsIs75aw
             DOCUMENTATION_USER: admin
             DOCUMENTATION_PASSWORD: admin
             MIRAGE_TOKEN: eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJleHBpcmF0aW9uRGF0ZSI6IjIxMjAtMDMtMzFUMTY6NDI6MjYuNDYzWiIsInBlcm1pc3Npb25zIjpbIlNhYVNUb2tlbiJdfQ.yCvExMyJ8CBvRsfjRsD6eAaQrajkjnj9mFlV3iP4S4A
