@@ -118,7 +118,11 @@ services:
             TRADUORA_PROJECT_ID: baab9752-e91c-4a73-90a1-65d80caf6fb2
             TRADUORA_CLIENT_ID: 21e06f2a-7169-4d5d-928d-69ee0bbdf0f2
             TRADUORA_CLIENT_SECRET: eZx3AQr56PuHeF3tAlK3GjyB6Slqk8rx
+<<<<<<< Updated upstream
             WAAPI_API_TOKEN: eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJleHBpcmF0aW9uRGF0ZSI6IjI5OTktMTItMzFUMjM6NTk6NTkuOTk5WiIsInNhbHQiOiJub25lIiwianRpIjoiMzhlMzM5ZGQtNTY0Zi00ZGIyLTk3OTAtMjllNmJkMTQ0ZTk5IiwiaWF0IjoxNjAyMDY2NDg4LCJleHAiOjE2MDIwNzAwODh9.D654ITgsba7ffui-T4_4Pa1CtkI7nEEJkWcMsIs75aw
+=======
+            WAAPI_API_TOKEN:
+>>>>>>> Stashed changes
         ports:
             - '5000:5000'
         volumes:

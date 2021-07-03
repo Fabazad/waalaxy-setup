@@ -305,8 +305,8 @@ export const getContentRepliedRate = async () => {
     console.log({ actionsHistories: actionsHistories.length });
     console.log({ contentReferences: contentReferences.length });
 
-    const contents = await Content.find({ _id: { $in: contentReferences } }).lean();
-
+    const contents = await Content.find({ _id: { $in: contentReferences }, createdAt: { $gt: '2021-06-10T14:13:14.691Z' } }).lean();
+    console.log(contents.length, 'contents found');
     const contentsMap = transformToMap(contents as any);
 
     const actionsMap = transformToMap(
