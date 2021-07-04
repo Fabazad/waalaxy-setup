@@ -1,5 +1,6 @@
 import MirageClient from '@waapi/mirage';
 import OnuClient from '@waapi/onu';
+import _ from 'lodash';
 import mongoose from 'mongoose';
 import { loginToDatabase } from '../../../mongoose';
 
@@ -45,19 +46,31 @@ const main = async () => {
     const bouncerDatabase = await loginToDatabase(process.env.BOUNCER_DATABASE!);
     const UserPermission = bouncerDatabase.model<any & mongoose.Document>('UserPermission', UserPermissionSchema);
 
-    const userPermissions = await UserPermission.find({ waapiId: '5fae96fc18bc59002349336d' });
+    const userPermissions = await UserPermission.find({
+        paymentWaapiId: { $exists: false },
+    });
 
     console.log(userPermissions.length);
 
     let i = 0;
-    for (const userPermission of userPermissions) {
-        const { waapiId } = userPermission;
-        const { _id: paymentWaapiId } = await onuClient.createEntity({ additionalData: {}, relatedTo: waapiId });
-        await UserPermission.updateOne({ _id: userPermission._id }, { $set: { paymentWaapiId } });
+    const chunked = _.chunk(userPermissions, 10);
+    for (const chunk of chunked) {
+        await Promise.all(
+            chunk.map(async (userPermission) => {
+                try {
+                    const { waapiId } = userPermission;
+                    const { _id: paymentWaapiId } = await onuClient.createEntity({ additionalData: {}, relatedTo: waapiId });
+                    await UserPermission.updateOne({ _id: userPermission._id }, { $set: { paymentWaapiId } });
 
-        const { stripeCustomerId } = await mirage.fetchClient(waapiId);
-        await mirage.intervertPaymentData(stripeCustomerId!, paymentWaapiId);
-        console.log(`${++i}/${userPermissions.length}`);
+                    const { stripeCustomerId } = await mirage.fetchClient(waapiId);
+                    await mirage.intervertPaymentData(stripeCustomerId!, paymentWaapiId);
+                } catch (e) {
+                    console.log(e);
+                }
+            }),
+        );
+        i += 10;
+        console.log(`${i}/${userPermissions.length}`);
     }
     console.log('End');
     process.exit(1);
