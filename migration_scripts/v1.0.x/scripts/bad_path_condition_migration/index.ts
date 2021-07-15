@@ -1,7 +1,7 @@
 import dotEnv from 'dotenv';
 import { Connection } from 'mongoose';
 import { loginToDatabase } from '../../../../mongoose';
-import { AllPossibleConditions, BooleanExpression, IWorld, Path } from './interfaces';
+import { AllPossibleConditions, BooleanExpression, ComplexBooleanExpression, IWorld, Path } from './interfaces';
 import { WorldModel } from './schemas';
 dotEnv.config();
 
@@ -14,14 +14,14 @@ const processNewConditions = (
 ): BooleanExpression<AllPossibleConditions> | null => {
     if (condition.isAtomic) return condition.entity.type === lookingFor ? { ...condition, entity: { params: undefined, type: 'isPending' } } : null;
 
-    const left = processNewConditions(condition.leftOperand, lookingFor);
-    const right = processNewConditions(condition.rightOperand, lookingFor);
+    const left = processNewConditions((condition as ComplexBooleanExpression<AllPossibleConditions>).leftOperand, lookingFor);
+    const right = processNewConditions((condition as ComplexBooleanExpression<AllPossibleConditions>).rightOperand, lookingFor);
 
     if (left !== null || right !== null)
         return {
             ...condition,
-            leftOperand: left !== null ? left : condition.leftOperand,
-            rightOperand: right !== null ? right : condition.rightOperand,
+            leftOperand: left !== null ? left : (condition as ComplexBooleanExpression<AllPossibleConditions>).leftOperand,
+            rightOperand: right !== null ? right : (condition as ComplexBooleanExpression<AllPossibleConditions>).rightOperand,
         } as BooleanExpression<AllPossibleConditions>;
     return null;
 };
