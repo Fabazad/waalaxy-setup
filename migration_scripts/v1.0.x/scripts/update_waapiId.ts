@@ -57,15 +57,17 @@ const main = async () => {
     for (const chunk of chunked) {
         await Promise.all(
             chunk.map(async (userPermission) => {
+                const { waapiId } = userPermission;
                 try {
-                    const { waapiId } = userPermission;
                     const { _id: paymentWaapiId } = await onuClient.createEntity({ additionalData: {}, relatedTo: waapiId });
+                    console.log('created');
                     await UserPermission.updateOne({ _id: userPermission._id }, { $set: { paymentWaapiId } });
 
                     const { stripeCustomerId } = await mirage.fetchClient(waapiId);
                     await mirage.intervertPaymentData(stripeCustomerId!, paymentWaapiId);
                 } catch (e) {
-                    console.log(e);
+                    console.log(waapiId);
+                    console.log(e.message);
                 }
             }),
         );

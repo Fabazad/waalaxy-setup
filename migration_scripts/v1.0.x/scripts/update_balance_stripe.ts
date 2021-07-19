@@ -86,6 +86,7 @@ const CompanySchema = new mongoose.Schema(
         name: { type: String, required: true },
         owner: { type: String, required: true, unique: true },
         seats: { type: [SeatSchema], required: true },
+        waapiId: String,
     },
     { timestamps: true, _id: true },
 );
@@ -131,7 +132,7 @@ const main = async () => {
 
     const bouncerDatabase = await loginToDatabase(process.env.BOUNCER_DATABASE!);
     const UserPermission = bouncerDatabase.model<any & mongoose.Document>('UserPermission', UserPermissionSchema);
-    const Companies = mongoose.model<ICompany & mongoose.Document>('Company', CompanySchema);
+    const Companies = bouncerDatabase.model<ICompany & mongoose.Document>('Company', CompanySchema);
 
     const companies = await Companies.find({
         _id: {
@@ -157,18 +158,11 @@ const main = async () => {
             console.log('Error', company._id);
             continue;
         }
-        const result = await mirage.getBalance({ waapiClientId: waapiId });
-        if (result.hasError) {
-            console.log('Error', company._id);
-            continue;
+
+        if (company._id.toString() !== '60e16f18c3a351002057eaab') {
+            const { stripeCustomerId } = await mirage.fetchClient(waapiId);
+            await mirage.intervertPaymentData(stripeCustomerId!, userPermission.paymentWaapiId);
         }
-        await mirage.updateBalance({
-            waapiClientId: userPermission.paymentWaapiId,
-            // @ts-ignore
-            amount: Math.abs(result.amount),
-            // @ts-ignore
-            method: result.amount > 0 ? 'credit' : 'refund',
-        });
 
         await Companies.deleteOne({ _id: company._id });
         await UserPermission.updateOne({ user: company.owner }, { $unset: { company: 1 } });
