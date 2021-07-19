@@ -3,10 +3,11 @@ import { Connection } from 'mongoose';
 import { loginToDatabase } from '../../../../mongoose';
 import { AllPossibleConditions, BooleanExpression, ComplexBooleanExpression, IWorld, Path } from './interfaces';
 import { WorldModel } from './schemas';
+import { printProgress } from './scriptHelper';
 dotEnv.config();
 
 const BATCH_SIZE = 1000;
-const PAUSE_BETWEEN_BATCH = 0;
+const PAUSE_BETWEEN_BATCH = 100; /* Milliseconds */
 
 const processNewConditions = (
     condition: BooleanExpression<AllPossibleConditions>,
@@ -27,11 +28,11 @@ const processNewConditions = (
 };
 
 const processNewPaths = (paths: Path<AllPossibleConditions>[]): Path<AllPossibleConditions>[] | null => {
-    const [foundMistake, updatedPaths] = paths.reduce(
-        (result, path): [boolean, Path<AllPossibleConditions>[]] => {
+    const [foundMistake, updatedPaths] = paths.reduce<[boolean, Path<AllPossibleConditions>[]]>(
+        (result, path) => {
             const updatedCondition = processNewConditions(path.condition, 'isNotConnected');
             const [r, p] = result;
-            return updatedCondition === null ? [r, [...p, path.condition]] : [true, [...p, updatedCondition]];
+            return updatedCondition === null ? [r, [...p, path]] : [true, [...p, { ...path, condition: updatedCondition }]];
         },
         [false, []],
     );
@@ -81,25 +82,26 @@ const countWorldsToProcess = (c: Connection) => WorldModel(c).countDocuments().e
 const findWorldBatch = (c: Connection, skip: number) => WorldModel(c).find({}).skip(skip).limit(BATCH_SIZE).lean().exec();
 
 export const replaceIsNotConnectedWithIsPendingInBadConditions = async () => {
-    console.log('Starting replacing isNotConnected with isPending in bad conditions');
     const connection = await loginToDatabase(process.env.PROFESOR_DATABASE!);
 
     const worldsToProcess = await countWorldsToProcess(connection);
 
-    console.log(`Found ${worldsToProcess} Worlds to process`);
+    console.log(`Found \x1b[1m\x1b[94m\x1b[47m ${worldsToProcess} \x1b[0m Worlds to process`);
 
     let processedWorlds = 0;
     let countWorldWithMistake = 0;
+    const startTime = Date.now();
 
     while (processedWorlds < worldsToProcess) {
         const worldsBatch: IWorld[] = await findWorldBatch(connection, processedWorlds);
 
-        countWorldWithMistake += worldsBatch.reduce((result: number, world: IWorld) => {
-            return processDetectedMistake(connection, world) ? result + 1 : result;
-        }, 0);
+        countWorldWithMistake += (await Promise.all(worldsBatch.map((world: IWorld) => processDetectedMistake(connection, world)))).reduce<number>(
+            (result, current) => (current ? result + 1 : result),
+            0,
+        );
 
         processedWorlds = Math.min(processedWorlds + BATCH_SIZE, worldsToProcess);
-        console.log(`${processedWorlds}/${worldsToProcess} processed users (${Math.round((processedWorlds / worldsToProcess) * 100 * 100) / 100}%)`);
+        printProgress(processedWorlds, worldsToProcess, startTime);
 
         await new Promise((r) => {
             setTimeout(r, PAUSE_BETWEEN_BATCH);
