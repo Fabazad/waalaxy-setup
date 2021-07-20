@@ -198,3 +198,6 @@ export declare type AtomicBooleanExpression<Entity> = {
     isAtomic: true;
     entity: Entity;
 };
+
+export declare type ConditionSearch = Partial<ConditionsDictionnary[keyof ConditionsDictionnary]>;
+export declare type ConditionReplace = ConditionsDictionnary[keyof ConditionsDictionnary];

@@ -1,7 +1,7 @@
 import dotEnv from 'dotenv';
 import { Connection } from 'mongoose';
 import { loginToDatabase } from '../../../../mongoose';
-import { AllPossibleConditions, BooleanExpression, ComplexBooleanExpression, IWorld, Path } from './interfaces';
+import { AllPossibleConditions, BooleanExpression, ComplexBooleanExpression, ConditionReplace, ConditionSearch, IWorld, Path } from './interfaces';
 import { WorldModel } from './schemas';
 import { printProgress } from './scriptHelper';
 dotEnv.config();
@@ -9,14 +9,41 @@ dotEnv.config();
 const BATCH_SIZE = 1000;
 const PAUSE_BETWEEN_BATCH = 100; /* Milliseconds */
 
-const processNewConditions = (
-    condition: BooleanExpression<AllPossibleConditions>,
-    lookingFor: string,
-): BooleanExpression<AllPossibleConditions> | null => {
-    if (condition.isAtomic) return condition.entity.type === lookingFor ? { ...condition, entity: { params: undefined, type: 'isPending' } } : null;
+/**
+ * @param condition : condition or nested conditions
+ * @param lookingFor : condition search params
+ * @param replaceWith : condition replacing entity
+ * @returns new condition with replaced entity or null if no condition match
+ */
+const replaceMatchingConditions = ({
+    condition,
+    lookingFor,
+    replaceWith,
+}: {
+    condition: BooleanExpression<AllPossibleConditions>;
+    lookingFor: ConditionSearch;
+    replaceWith: ConditionReplace;
+}): BooleanExpression<AllPossibleConditions> | null => {
+    if (condition.isAtomic) {
+        if (
+            (lookingFor.type && lookingFor.params && condition.entity === lookingFor) ||
+            (lookingFor.type && !lookingFor.params && condition.entity.type === lookingFor.type) ||
+            (!lookingFor.type && lookingFor.params && condition.entity.params === lookingFor.params)
+        )
+            return { ...condition, entity: replaceWith };
+        return null;
+    }
 
-    const left = processNewConditions((condition as ComplexBooleanExpression<AllPossibleConditions>).leftOperand, lookingFor);
-    const right = processNewConditions((condition as ComplexBooleanExpression<AllPossibleConditions>).rightOperand, lookingFor);
+    const left = replaceMatchingConditions({
+        condition: (condition as ComplexBooleanExpression<AllPossibleConditions>).leftOperand,
+        lookingFor,
+        replaceWith,
+    });
+    const right = replaceMatchingConditions({
+        condition: (condition as ComplexBooleanExpression<AllPossibleConditions>).rightOperand,
+        lookingFor,
+        replaceWith,
+    });
 
     if (left !== null || right !== null)
         return {
@@ -27,19 +54,40 @@ const processNewConditions = (
     return null;
 };
 
-const processNewPaths = (paths: Path<AllPossibleConditions>[]): Path<AllPossibleConditions>[] | null => {
+/**
+ *
+ * @param paths : paths of a specific waypoint (from)
+ * @param lookingFor : condition search params
+ * @param replaceWith : condition replacing entity
+ * @returns paths with updated conditions or null if paths have not changed
+ */
+const replaceMatchingPaths = ({
+    paths,
+    lookingFor,
+    replaceWith,
+}: {
+    paths: Path<AllPossibleConditions>[];
+    lookingFor: ConditionSearch;
+    replaceWith: ConditionReplace;
+}): Path<AllPossibleConditions>[] | null => {
     const [foundMistake, updatedPaths] = paths.reduce<[boolean, Path<AllPossibleConditions>[]]>(
         (result, path) => {
-            const updatedCondition = processNewConditions(path.condition, 'isNotConnected');
-            const [r, p] = result;
-            return updatedCondition === null ? [r, [...p, path]] : [true, [...p, { ...path, condition: updatedCondition }]];
+            const updatedCondition = replaceMatchingConditions({
+                condition: path.condition,
+                lookingFor,
+                replaceWith,
+            });
+            const [foundMistake, updatedPaths] = result;
+            return updatedCondition === null
+                ? [foundMistake, [...updatedPaths, path]]
+                : [true, [...updatedPaths, { ...path, condition: updatedCondition }]];
         },
         [false, []],
     );
     return foundMistake ? updatedPaths : null;
 };
 
-const processDetectedMistake = async (
+const replaceWorldPaths = async (
     connection: Connection,
     world: IWorld,
     sawConnectLinkedin = false,
@@ -59,7 +107,11 @@ const processDetectedMistake = async (
 
     if (connectLinkedin) {
         // Compute new paths
-        const processedPaths = processNewPaths(world.paths.filter((path) => path.from === waypoint));
+        const processedPaths = replaceMatchingPaths({
+            paths: world.paths.filter((path) => path.from === waypoint),
+            lookingFor: { type: 'isNotConnected' },
+            replaceWith: { type: 'isPending', params: undefined },
+        });
 
         if (processedPaths !== null) {
             await WorldModel(connection).updateOne(
@@ -73,7 +125,7 @@ const processDetectedMistake = async (
     // Call recursively neighbors
     return nextWaypointsIds.reduce<Promise<boolean>>(
         async (result: Promise<boolean>, waypointId: string): Promise<boolean> =>
-            result || (await processDetectedMistake(connection, world, connectLinkedin, waypointId)),
+            result || (await replaceWorldPaths(connection, world, connectLinkedin, waypointId)),
         new Promise((resolve) => resolve(false)),
     );
 };
@@ -95,7 +147,7 @@ export const replaceIsNotConnectedWithIsPendingInBadConditions = async () => {
     while (processedWorlds < worldsToProcess) {
         const worldsBatch: IWorld[] = await findWorldBatch(connection, processedWorlds);
 
-        countWorldWithMistake += (await Promise.all(worldsBatch.map((world: IWorld) => processDetectedMistake(connection, world)))).reduce<number>(
+        countWorldWithMistake += (await Promise.all(worldsBatch.map((world: IWorld) => replaceWorldPaths(connection, world)))).reduce<number>(
             (result, current) => (current ? result + 1 : result),
             0,
         );
