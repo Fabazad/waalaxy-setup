@@ -3,10 +3,10 @@ import { Connection } from 'mongoose';
 import { loginToDatabase } from '../../../../mongoose';
 import { AllPossibleConditions, BooleanExpression, ComplexBooleanExpression, ConditionReplace, ConditionSearch, IWorld, Path } from './interfaces';
 import { WorldModel } from './schemas';
-import { printProgress } from './scriptHelper';
+import { printProgress, printStartScript } from './scriptHelper';
 dotEnv.config();
 
-const BATCH_SIZE = 1000;
+const BATCH_SIZE = 200;
 const PAUSE_BETWEEN_BATCH = 100; /* Milliseconds */
 
 /**
@@ -138,7 +138,7 @@ export const replaceIsNotConnectedWithIsPendingInBadConditions = async () => {
 
     const worldsToProcess = await countWorldsToProcess(connection);
 
-    console.log(`Found \x1b[1m\x1b[94m\x1b[47m ${worldsToProcess} \x1b[0m Worlds to process`);
+    printStartScript('Replace bad conditions in world paths');
 
     let processedWorlds = 0;
     let countWorldWithMistake = 0;
