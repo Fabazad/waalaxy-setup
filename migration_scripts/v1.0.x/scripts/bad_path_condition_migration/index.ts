@@ -1,7 +1,16 @@
 import dotEnv from 'dotenv';
 import { Connection } from 'mongoose';
 import { loginToDatabase } from '../../../../mongoose';
-import { AllPossibleConditions, BooleanExpression, ComplexBooleanExpression, ConditionReplace, ConditionSearch, IWorld, Path } from './interfaces';
+import {
+    AllPossibleConditions,
+    AllPossibleWaypoints,
+    BooleanExpression,
+    ComplexBooleanExpression,
+    ConditionReplace,
+    ConditionSearch,
+    IWorld,
+    Path,
+} from './interfaces';
 import { WorldModel } from './schemas';
 import { printProgress, printStartScript } from './scriptHelper';
 dotEnv.config();
@@ -69,8 +78,8 @@ const replaceMatchingPaths = ({
     paths: Path<AllPossibleConditions>[];
     lookingFor: ConditionSearch;
     replaceWith: ConditionReplace;
-}): Path<AllPossibleConditions>[] | null => {
-    const [foundMistake, updatedPaths] = paths.reduce<[boolean, Path<AllPossibleConditions>[]]>(
+}): [boolean, Path<AllPossibleConditions>[]] => {
+    return paths.reduce<[boolean, Path<AllPossibleConditions>[]]>(
         (result, path) => {
             const updatedCondition = replaceMatchingConditions({
                 condition: path.condition,
@@ -84,50 +93,64 @@ const replaceMatchingPaths = ({
         },
         [false, []],
     );
-    return foundMistake ? updatedPaths : null;
 };
 
-const replaceWorldPaths = async (
-    connection: Connection,
-    world: IWorld,
-    sawConnectLinkedin = false,
-    currentWaypointId: string | null = null,
-): Promise<boolean> => {
-    // Starting case
-    const waypoint = currentWaypointId === null ? world.startingPoint.id : currentWaypointId;
+/**
+ *
+ * @param world : world to lookup
+ * @param condition : waypoint type condition
+ * @param sawCondition : to keep track of first condition
+ * @param currentWaypointId : current waypoint id
+ * @param lookingFor : condition search params
+ * @param replaceWith : condition replacing entity
+ * @returns world paths and boolean to know if there is some changes
+ */
 
-    // Get neighbor waypoints
-    const nextWaypointsIds = world.paths.filter((path) => path.from === waypoint).map((path) => path.to);
+const replaceWorldPaths = ({
+    world,
+    condition,
+    sawCondition = false,
+    currentWaypointId = world.startingPoint.id,
+    lookingFor,
+    replaceWith,
+}: {
+    world: IWorld;
+    condition: AllPossibleWaypoints[keyof AllPossibleWaypoints];
+    sawCondition?: boolean;
+    currentWaypointId?: string;
+    lookingFor: ConditionSearch;
+    replaceWith: ConditionReplace;
+}): [boolean, Path<AllPossibleConditions>[]] => {
+    const nextWaypointsIds = world.paths.filter((path) => path.from === currentWaypointId).map((path) => path.to);
 
-    // Ending case
-    if (nextWaypointsIds.length === 0) return false;
+    if (nextWaypointsIds.length === 0) return [false, []];
 
-    // Update connectLinkedIn condition
-    const connectLinkedin = sawConnectLinkedin || world.waypoints.find((wp) => wp.id === waypoint)?.type === 'connectLinkedin';
+    sawCondition = sawCondition || world.waypoints.find((wp) => wp.id === currentWaypointId)?.type === condition;
 
-    if (connectLinkedin) {
-        // Compute new paths
-        const processedPaths = replaceMatchingPaths({
-            paths: world.paths.filter((path) => path.from === waypoint),
-            lookingFor: { type: 'isNotConnected' },
-            replaceWith: { type: 'isPending', params: undefined },
-        });
-
-        if (processedPaths !== null) {
-            await WorldModel(connection).updateOne(
-                { _id: world._id },
-                { paths: [...processedPaths, ...world.paths.filter((path) => path.from !== waypoint)] },
-            );
-            return true;
-        }
-    }
-
-    // Call recursively neighbors
-    return nextWaypointsIds.reduce<Promise<boolean>>(
-        async (result: Promise<boolean>, waypointId: string): Promise<boolean> =>
-            result || (await replaceWorldPaths(connection, world, connectLinkedin, waypointId)),
-        new Promise((resolve) => resolve(false)),
+    // Next Waypoints
+    const [nextHaveChanged, nextPaths] = nextWaypointsIds.reduce<[boolean, Path<AllPossibleConditions>[]]>(
+        ([resultHasChanged, resultPaths], waypointId) => {
+            const [changed, changedPaths] = replaceWorldPaths({
+                world,
+                condition,
+                lookingFor,
+                replaceWith,
+                currentWaypointId: waypointId,
+                sawCondition,
+            });
+            return [resultHasChanged || changed, [...resultPaths, ...changedPaths]];
+        },
+        [false, []],
     );
+
+    // Current Waypoint
+    const [hasChanged, paths] = replaceMatchingPaths({
+        paths: world.paths.filter((path) => path.from === currentWaypointId),
+        lookingFor,
+        replaceWith,
+    });
+
+    return [sawCondition && hasChanged ? true : nextHaveChanged, [...paths, ...nextPaths]];
 };
 
 const countWorldsToProcess = (c: Connection) => WorldModel(c).countDocuments().exec();
@@ -147,10 +170,18 @@ export const replaceIsNotConnectedWithIsPendingInBadConditions = async () => {
     while (processedWorlds < worldsToProcess) {
         const worldsBatch: IWorld[] = await findWorldBatch(connection, processedWorlds);
 
-        countWorldWithMistake += (await Promise.all(worldsBatch.map((world: IWorld) => replaceWorldPaths(connection, world)))).reduce<number>(
-            (result, current) => (current ? result + 1 : result),
-            0,
-        );
+        worldsBatch.forEach(async (world) => {
+            const [hasChanged, paths] = replaceWorldPaths({
+                world,
+                condition: 'connectLinkedin',
+                lookingFor: { type: 'isNotConnected' },
+                replaceWith: { type: 'isPending', params: undefined },
+            });
+            if (hasChanged) {
+                await WorldModel(connection).updateOne({ _id: world._id }, { paths });
+                countWorldWithMistake += 1;
+            }
+        });
 
         processedWorlds = Math.min(processedWorlds + BATCH_SIZE, worldsToProcess);
         printProgress(processedWorlds, worldsToProcess, startTime);
