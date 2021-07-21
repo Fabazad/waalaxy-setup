@@ -34,7 +34,7 @@ const isMatchingCondition = ({
     if (condition.isAtomic)
         return (
             (lookingFor.type ? condition.entity.type === lookingFor.type : true) &&
-            (lookingFor.params ? condition.entity.params === lookingFor.params : true)
+            (lookingFor.params ? JSON.stringify(condition.entity.params) === JSON.stringify(lookingFor.params) : true)
         );
 
     // Complex condition
@@ -121,7 +121,7 @@ const hasChangeDetectedInWorld = ({
 const countWorldsToProcess = (c: Connection) => WorldModel(c).countDocuments().exec();
 const findWorldBatch = (c: Connection, skip: number) => WorldModel(c).find({}).skip(skip).limit(BATCH_SIZE).lean().exec();
 
-export const countPathsBadConditions = async () => {
+const countPathsBadConditions = async () => {
     const connection = await loginToDatabase(process.env.PROFESOR_DATABASE!);
 
     const worldsToProcess = await countWorldsToProcess(connection);

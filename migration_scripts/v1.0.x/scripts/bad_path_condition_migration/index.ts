@@ -37,7 +37,7 @@ const transformCondition = ({
     if (condition.isAtomic) {
         if (
             (lookingFor.type ? condition.entity.type === lookingFor.type : true) &&
-            (lookingFor.params ? condition.entity.params === lookingFor.params : true)
+            (lookingFor.params ? JSON.stringify(condition.entity.params) === JSON.stringify(lookingFor.params) : true)
         )
             return [true, { ...condition, entity: replaceWith }];
         return [false, condition];
@@ -152,13 +152,14 @@ const replaceWorldPaths = ({
         replaceWith,
     });
 
-    return [nextHaveChanged || (sawCondition && hasChanged), [...paths, ...nextPaths]];
+    if (!sawCondition || !hasChanged) return [nextHaveChanged, [...world.paths.filter((path) => path.from === currentWaypointId), ...nextPaths]];
+    return [true, [...paths, ...nextPaths]];
 };
 
 const countWorldsToProcess = (c: Connection) => WorldModel(c).countDocuments().exec();
 const findWorldBatch = (c: Connection, skip: number) => WorldModel(c).find({}).skip(skip).limit(BATCH_SIZE).lean().exec();
 
-export const replaceIsNotConnectedWithIsPendingInBadConditions = async () => {
+const replaceIsNotConnectedWithIsPendingInBadConditions = async () => {
     const connection = await loginToDatabase(process.env.PROFESOR_DATABASE!);
 
     const worldsToProcess = await countWorldsToProcess(connection);
@@ -179,6 +180,7 @@ export const replaceIsNotConnectedWithIsPendingInBadConditions = async () => {
                 lookingFor: { type: 'isNotConnected' },
                 replaceWith: { type: 'isPending', params: undefined },
             });
+            if (world.paths.length !== paths.length) throw new Error('Paths length missmatch');
             if (hasChanged) {
                 await WorldModel(connection).updateOne({ _id: world._id }, { paths });
                 countWorldWithMistake += 1;
