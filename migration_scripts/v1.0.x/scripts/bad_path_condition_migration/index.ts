@@ -22,9 +22,9 @@ const PAUSE_BETWEEN_BATCH = 100; /* Milliseconds */
  * @param condition : condition or nested conditions
  * @param lookingFor : condition search params
  * @param replaceWith : condition replacing entity
- * @returns new condition with replaced entity or null if no condition match
+ * @returns new condition with replaced entity and a boolean to know if condition have changed
  */
-const replaceMatchingConditions = ({
+const transformCondition = ({
     condition,
     lookingFor,
     replaceWith,
@@ -32,35 +32,40 @@ const replaceMatchingConditions = ({
     condition: BooleanExpression<AllPossibleConditions>;
     lookingFor: ConditionSearch;
     replaceWith: ConditionReplace;
-}): BooleanExpression<AllPossibleConditions> | null => {
+}): [boolean, BooleanExpression<AllPossibleConditions>] => {
+    // Atomic condition
     if (condition.isAtomic) {
         if (
             (lookingFor.type && lookingFor.params && condition.entity === lookingFor) ||
             (lookingFor.type && !lookingFor.params && condition.entity.type === lookingFor.type) ||
             (!lookingFor.type && lookingFor.params && condition.entity.params === lookingFor.params)
         )
-            return { ...condition, entity: replaceWith };
-        return null;
+            return [true, { ...condition, entity: replaceWith }];
+        return [false, condition];
     }
 
-    const left = replaceMatchingConditions({
+    // Complex condition
+    const [leftUpdated, leftCondition] = transformCondition({
         condition: (condition as ComplexBooleanExpression<AllPossibleConditions>).leftOperand,
         lookingFor,
         replaceWith,
     });
-    const right = replaceMatchingConditions({
+    const [rightUpdated, rightCondition] = transformCondition({
         condition: (condition as ComplexBooleanExpression<AllPossibleConditions>).rightOperand,
         lookingFor,
         replaceWith,
     });
 
-    if (left !== null || right !== null)
-        return {
+    if (!leftUpdated && !rightUpdated) return [false, condition];
+
+    return [
+        true,
+        {
             ...condition,
-            leftOperand: left !== null ? left : (condition as ComplexBooleanExpression<AllPossibleConditions>).leftOperand,
-            rightOperand: right !== null ? right : (condition as ComplexBooleanExpression<AllPossibleConditions>).rightOperand,
-        } as BooleanExpression<AllPossibleConditions>;
-    return null;
+            leftOperand: leftUpdated ? leftCondition : (condition as ComplexBooleanExpression<AllPossibleConditions>).leftOperand,
+            rightOperand: rightUpdated ? rightCondition : (condition as ComplexBooleanExpression<AllPossibleConditions>).rightOperand,
+        } as BooleanExpression<AllPossibleConditions>,
+    ];
 };
 
 /**
@@ -68,9 +73,9 @@ const replaceMatchingConditions = ({
  * @param paths : paths of a specific waypoint (from)
  * @param lookingFor : condition search params
  * @param replaceWith : condition replacing entity
- * @returns paths with updated conditions or null if paths have not changed
+ * @returns paths with updated conditions and a boolean to know if paths have changed
  */
-const replaceMatchingPaths = ({
+const transformPaths = ({
     paths,
     lookingFor,
     replaceWith,
@@ -81,15 +86,13 @@ const replaceMatchingPaths = ({
 }): [boolean, Path<AllPossibleConditions>[]] => {
     return paths.reduce<[boolean, Path<AllPossibleConditions>[]]>(
         (result, path) => {
-            const updatedCondition = replaceMatchingConditions({
+            const [conditionChanged, condition] = transformCondition({
                 condition: path.condition,
                 lookingFor,
                 replaceWith,
             });
             const [foundMistake, updatedPaths] = result;
-            return updatedCondition === null
-                ? [foundMistake, [...updatedPaths, path]]
-                : [true, [...updatedPaths, { ...path, condition: updatedCondition }]];
+            return [foundMistake || conditionChanged, [...updatedPaths, { ...path, condition }]];
         },
         [false, []],
     );
@@ -144,13 +147,13 @@ const replaceWorldPaths = ({
     );
 
     // Current Waypoint
-    const [hasChanged, paths] = replaceMatchingPaths({
+    const [hasChanged, paths] = transformPaths({
         paths: world.paths.filter((path) => path.from === currentWaypointId),
         lookingFor,
         replaceWith,
     });
 
-    return [sawCondition && hasChanged ? true : nextHaveChanged, [...paths, ...nextPaths]];
+    return [nextHaveChanged || (sawCondition && hasChanged), [...paths, ...nextPaths]];
 };
 
 const countWorldsToProcess = (c: Connection) => WorldModel(c).countDocuments().exec();
@@ -184,11 +187,10 @@ export const replaceIsNotConnectedWithIsPendingInBadConditions = async () => {
         });
 
         processedWorlds = Math.min(processedWorlds + BATCH_SIZE, worldsToProcess);
-        printProgress(processedWorlds, worldsToProcess, startTime);
 
-        await new Promise((r) => {
-            setTimeout(r, PAUSE_BETWEEN_BATCH);
-        });
+        await new Promise((r) => setTimeout(r, PAUSE_BETWEEN_BATCH));
+
+        printProgress(processedWorlds, worldsToProcess, startTime);
     }
 
     console.log(`${countWorldWithMistake} worlds with mistakes found`);
