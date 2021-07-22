@@ -346,6 +346,7 @@ services:
             DOCUMENTATION_PASSWORD: admin
             SLACK_TOKEN: cce9bdbb82c6919c26c725f18812414fbb5894f872a20f042e938af246bd743e
             SLACK_KPI_CHANNEL: C01T62UJJ94
+            SEGMENT_TOKEN: jigqsMV74PyPgR6aOpFVhqhipzstL441
         ports:
             - '5009:5009'
         volumes:
