@@ -1,4 +1,5 @@
 import dotEnv from 'dotenv';
+import _ from 'lodash';
 import { Connection } from 'mongoose';
 import { loginToDatabase } from '../../../../mongoose';
 import {
@@ -151,7 +152,6 @@ const replaceWorldPaths = ({
         lookingFor,
         replaceWith,
     });
-
     if (!sawCondition || !hasChanged) return [nextHaveChanged, [...world.paths.filter((path) => path.from === currentWaypointId), ...nextPaths]];
     return [true, [...paths, ...nextPaths]];
 };
@@ -173,19 +173,23 @@ const replaceIsNotConnectedWithIsPendingInBadConditions = async () => {
     while (processedWorlds < worldsToProcess) {
         const worldsBatch: IWorld[] = await findWorldBatch(connection, processedWorlds);
 
-        worldsBatch.forEach(async (world) => {
+        for await (const world of worldsBatch) {
             const [hasChanged, paths] = replaceWorldPaths({
                 world,
                 condition: 'connectLinkedin',
                 lookingFor: { type: 'isNotConnected' },
                 replaceWith: { type: 'isPending', params: undefined },
             });
-            if (world.paths.length !== paths.length) throw new Error('Paths length missmatch');
+            const sanitizedPaths = _.uniqWith(paths, (v1, v2) => v1.id === v2.id && v1.to === v2.to && v1.from === v2.from);
+            if (world.paths.length !== sanitizedPaths.length) {
+                console.log(world.paths, sanitizedPaths);
+                throw new Error('Paths length missmatch');
+            }
             if (hasChanged) {
-                await WorldModel(connection).updateOne({ _id: world._id }, { paths });
+                await WorldModel(connection).updateOne({ _id: world._id }, { paths: sanitizedPaths });
                 countWorldWithMistake += 1;
             }
-        });
+        }
 
         processedWorlds = Math.min(processedWorlds + BATCH_SIZE, worldsToProcess);
 
