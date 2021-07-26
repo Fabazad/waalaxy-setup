@@ -255,47 +255,72 @@ export const getContentRepliedRate = async () => {
         {
             $or: [
                 {
-                    'history.name': 'message_replied',
+                    'history.name': 'linkedin_connect',
                 },
                 {
-                    'history.name': 'relationship_connection',
+                    'history.name': 'linkedin_message',
                 },
             ],
+            createdAt: { $gt: '2021-06-10T14:13:14.691Z' },
         },
         { history: true },
     ).lean();
     console.log(`${prospects.length} found`);
 
-    const filteredProspects = prospects.filter((prospect) => {
-        const { isValid } = prospect.history.reduce(
-            (acc: any, current: any) => {
-                if (current.name === 'relationship_connection' && acc.hasSentConnect) return { ...acc, isValid: true };
-                if (current.name === 'message_replied' && acc.hasSentMessage) return { ...acc, isValid: true };
-                if (current.name === 'linkedin_connect') return { ...acc, hasSentConnect: true };
-                if (current.name === 'linkedin_message') return { ...acc, hasSentMessage: true };
-                return acc;
-            },
-            {
-                hasSentConnect: false,
-                hasSentMessage: false,
-                isValid: false,
-            },
-        );
-        return isValid;
-    });
-    console.log({ filteredProspects: filteredProspects.length });
-    const actionIds = [];
-    for (const prospect of filteredProspects) {
-        actionIds.push(
-            ...prospect.history
-                .filter((element: any) => element.name === 'linkedin_connect' || element.name === 'linkedin_message')
-                .map((element: any) => element.action)
-                .filter(Boolean),
-        );
-    }
+    type RepliedAcceptedSentData = {
+        note: { [key: string]: { accepted: number; sent: number } };
+        message: { [key: string]: { sent: number; replied: number } };
+    };
 
-    const actions = await Action.find({ _id: { $in: actionIds } }).lean();
-    const actionsHistories = await ActionHistory.find({ action: { $in: actionIds } }).lean();
+    const results = prospects.reduce<RepliedAcceptedSentData>(
+        (result, prospect) => {
+            console.log(prospect.history.length);
+            const connects: Array<string> = [];
+            const messages: Array<string> = [];
+            (prospect.history as Array<any>).forEach((current: any) => {
+                if (current.name === 'linkedin_connect') {
+                    connects.push(current.action);
+                    if (result.note[current.action]) {
+                        result.note[current.action].sent = result.note[current.action].sent + 1;
+                    } else {
+                        result.note[current.action] = { sent: 1, accepted: 0 };
+                    }
+                }
+                if (current.name === 'linkedin_message') {
+                    messages.push(current.action);
+                    if (result.message[current.action]) {
+                        result.message[current.action].sent = result.message[current.action].sent + 1;
+                    } else {
+                        result.message[current.action] = { sent: 1, replied: 0 };
+                    }
+                }
+                if (current.name === 'relationship_connection') {
+                    connects.forEach((connect) => {
+                        result.note[connect].accepted = result.note[connect].accepted + 1;
+                    });
+                }
+                if (current.name === 'message_replied') {
+                    messages.forEach((message) => {
+                        result.message[message].replied = result.message[message].replied + 1;
+                    });
+                }
+            });
+            return result;
+        },
+        { message: {}, note: {} },
+    );
+    console.log({ messages: Object.keys(results.message).length, notes: Object.keys(results.note).length });
+    const actionIds = [...Object.keys(results.note), ...Object.keys(results.message)];
+
+    const chunks = _.chunk(actionIds, 10000);
+    const actions: Array<any> = [];
+    const actionsHistories: Array<any> = [];
+    await Promise.all(
+        chunks.map(async (chunk) => {
+            actions.push(...(await Action.find({ _id: { $in: chunk } }).lean()));
+            actionsHistories.push(...(await ActionHistory.find({ action: { $in: chunk } }).lean()));
+        }),
+    );
 
     const contentReferences = [...actions, ...actionsHistories]
         .filter((action) => action?.params?.contentReference && action?.params?.contentReference.length === 24)
@@ -309,68 +334,45 @@ export const getContentRepliedRate = async () => {
     console.log(contents.length, 'contents found');
     const contentsMap = transformToMap(contents as any);
 
-    const actionsMap = transformToMap(
-        actions
-            .filter((action) => action?.params?.contentReference && contentsMap[action.params.contentReference])
-            .map((action) => ({
-                ...action,
-                params: {
-                    ...action.params,
-                    contentReference: contentsMap[action.params.contentReference],
-                },
-            })) as any,
-    );
-    const actionsHistoriesMap = transformToMap(
-        actionsHistories
-            .filter((action) => action?.params?.contentReference && contentsMap[action.params.contentReference])
-            .map((action) => ({
-                ...action,
-                params: {
-                    ...action.params,
-                    contentReference: contentsMap[action.params.contentReference],
-                },
-            })) as any,
-    );
+    [...actions, ...actionsHistories]
+        .filter((action) => action?.params?.contentReference && contentsMap[action.params.contentReference])
+        .forEach((action) => {
+            const accepted = (results[action.type.toLowerCase().includes('connect') ? 'note' : 'message'][action._id] as any)?.accepted || 0;
+            const replied = (results[action.type.toLowerCase().includes('connect') ? 'note' : 'message'][action._id] as any)?.replied || 0;
+            contentsMap[action.params.contentReference] = {
+                ...contentsMap[action.params.contentReference],
+                sent:
+                    (contentsMap[action.params.contentReference].sent || 0) +
+                        results[action.type.toLowerCase().includes('connect') ? 'note' : 'message'][action._id]?.sent || 0,
+                accepted: accepted
+                    ? (contentsMap[action.params.contentReference].accepted || 0) + accepted
+                    : contentsMap[action.params.contentReference].accepted,
+                replied: replied
+                    ? (contentsMap[action.params.contentReference].replied || 0) + replied
+                    : contentsMap[action.params.contentReference].replied,
+            };
+        }) as any;
 
-    const populatedProspects = filteredProspects.reduce((acc: Array<any>, prospect: any) => {
-        const sanityzedHistory = _.uniqWith(prospect.history, function (e: any, a: any) {
-            if (e.name === 'message_seen' && a.name === 'message_seen') return a?.params?.messageId === a?.params?.messageId;
-            if (e.name === 'message_replied' && a.name === 'message_replied') return a?.params?.messageId === a?.params?.messageId;
-            if (e.name === 'relationship_connection' && a.name === 'relationship_connection')
-                return a?.params?.connectedAt === a?.params?.connectedAt;
-            return false;
+    const sanityzedContentsMap = Object.values(contentsMap)
+        .filter((content) => typeof content.sent !== 'undefined' && content.sent !== 0)
+        .map((content) => {
+            return {
+                content: content?.params?.noteContent || content?.params?.messageContent,
+                accepted: typeof content.accepted !== 'undefined' ? content.accepted : content?.params?.noteContent ? 0 : undefined,
+                sent: content.sent,
+                replied: typeof content.replied !== 'undefined' ? content.replied : content?.params?.messageContent ? 0 : undefined,
+            };
         });
-        const hasContentReference = sanityzedHistory.some(
-            (element) =>
-                ((element.name === 'linkedin_connect' || element.name === 'linkedin_message') && actionsMap[element.action]) ||
-                actionsHistoriesMap[element.action],
-        );
-        if (!hasContentReference) return acc;
-        return [
-            ...acc,
-            {
-                ...prospect,
-                history: sanityzedHistory.map((element: any) => {
-                    return element.name === 'linkedin_connect' || element.name === 'linkedin_message'
-                        ? {
-                              ...element,
-                              action: actionsMap[element.action] || actionsHistoriesMap[element.action],
-                          }
-                        : element;
-                }),
-            },
-        ];
-    }, []);
 
-    console.log({ prospectWithAtLeastOnePopulatedContent: populatedProspects.length });
+    console.log(sanityzedContentsMap.length);
 
     await new Promise((resolve) =>
-        fs.writeFile('./dataset/replied_or_accepted_complete_dataset.json', JSON.stringify(populatedProspects), (err) => {
+        fs.writeFile('./dataset/replied_or_accepted_complete_dataset.json', JSON.stringify(sanityzedContentsMap), (err) => {
             if (err) {
                 console.error(err);
                 return;
             }
-            fs.writeFile('./dataset/replied_or_accepted_sliced_dataset.json', JSON.stringify(populatedProspects.slice(0, 100)), (err) => {
+            fs.writeFile('./dataset/replied_or_accepted_sliced_dataset.json', JSON.stringify(sanityzedContentsMap.slice(0, 100)), (err) => {
                 if (err) {
                     console.error(err);
                     return;
@@ -380,110 +382,6 @@ export const getContentRepliedRate = async () => {
             });
         }),
     );
-    console.log('Starting no replies');
-
-    const prospectWithNoReplies = await Prospect.find(
-        {
-            'history.name': { $nin: ['message_replied', 'relationship_connection'], $in: ['linkedin_message', 'linkedin_connect'] },
-        },
-        { history: true },
-    )
-        .limit(50000)
-        .lean();
-
-    const noRepliesActionIds = [];
-    for (const prospect of prospectWithNoReplies) {
-        noRepliesActionIds.push(
-            ...prospect.history
-                .filter((element: any) => element.name === 'linkedin_connect' || element.name === 'linkedin_message')
-                .map((element: any) => element.action)
-                .filter(Boolean),
-        );
-    }
-
-    const noRepliesActions = await Action.find({ _id: { $in: noRepliesActionIds } }).lean();
-    const noRepliesActionsHistories = await ActionHistory.find({ action: { $in: noRepliesActionIds } }).lean();
-
-    const noRepliesContentReferences = [...noRepliesActions, ...noRepliesActionsHistories]
-        .filter((action) => action?.params?.contentReference && action?.params?.contentReference.length === 24)
-        .map((action) => action?.params?.contentReference);
-
-    console.log({ noRepliesActions: noRepliesActions.length });
-    console.log({ noRepliesActionsHistories: noRepliesActionsHistories.length });
-    console.log({ noRepliesContentReferences: noRepliesContentReferences.length });
-
-    const noRepliesContents = await Content.find({ _id: { $in: noRepliesContentReferences } }).lean();
-
-    const noRepliesContentsMap = transformToMap(noRepliesContents as any);
-
-    const noRepliesActionsMap = transformToMap(
-        noRepliesActions
-            .filter((action) => action?.params?.contentReference && noRepliesContentsMap[action.params.contentReference])
-            .map((action) => ({
-                ...action,
-                params: {
-                    ...action.params,
-                    contentReference: noRepliesContentsMap[action.params.contentReference],
-                },
-            })) as any,
-    );
-    const noRepliesActionsHistoriesMap = transformToMap(
-        noRepliesActionsHistories
-            .filter((action) => action?.params?.contentReference && noRepliesContentsMap[action.params.contentReference])
-            .map((action) => ({
-                ...action,
-                params: {
-                    ...action.params,
-                    contentReference: contentsMap[action.params.contentReference],
-                },
-            })) as any,
-    );
-
-    const noRepliesPopulatedProspects = prospectWithNoReplies.reduce((acc: Array<any>, prospect: any) => {
-        const sanityzedHistory = _.uniqWith(prospect.history, function (e: any, a: any) {
-            if (e.name === 'message_seen' && a.name === 'message_seen') return a?.params?.messageId === a?.params?.messageId;
-            if (e.name === 'message_replied' && a.name === 'message_replied') return a?.params?.messageId === a?.params?.messageId;
-            if (e.name === 'relationship_connection' && a.name === 'relationship_connection')
-                return a?.params?.connectedAt === a?.params?.connectedAt;
-            return false;
-        });
-        const hasContentReference = sanityzedHistory.some(
-            (element) =>
-                ((element.name === 'linkedin_connect' || element.name === 'linkedin_message') && noRepliesActionsMap[element.action]) ||
-                noRepliesActionsHistoriesMap[element.action],
-        );
-        if (!hasContentReference) return acc;
-        return [
-            ...acc,
-            {
-                ...prospect,
-                history: sanityzedHistory.map((element: any) => {
-                    return element.name === 'linkedin_connect' || element.name === 'linkedin_message'
-                        ? {
-                              ...element,
-                              action: noRepliesActionsMap[element.action] || noRepliesActionsHistoriesMap[element.action],
-                          }
-                        : element;
-                }),
-            },
-        ];
-    }, []);
-
-    console.log({ prospectWithAtLeastOnePopulatedContent: noRepliesPopulatedProspects.length });
-
-    fs.writeFile('./dataset/no_reply_or_accept_complete_dataset.json', JSON.stringify(noRepliesPopulatedProspects), (err) => {
-        if (err) {
-            console.error(err);
-            return;
-        }
-        fs.writeFile('./dataset/no_reply_or_accept_sliced_dataset.json', JSON.stringify(noRepliesPopulatedProspects.slice(0, 100)), (err) => {
-            if (err) {
-                console.error(err);
-                return;
-            }
-            console.log('Done');
-        });
-    });
 };
 
 getContentRepliedRate();
