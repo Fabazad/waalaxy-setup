@@ -1,7 +1,8 @@
 import dotEnv from 'dotenv';
 import _ from 'lodash';
 import { Connection } from 'mongoose';
-import { loginToDatabase } from '../../../../mongoose';
+import { loginToDatabase } from '../../../mongoose';
+import { printProgress, printStartScript } from '../../scriptHelper';
 import {
     AllPossibleConditions,
     AllPossibleWaypoints,
@@ -13,7 +14,6 @@ import {
     Path,
 } from './interfaces';
 import { WorldModel } from './schemas';
-import { printProgress, printStartScript } from './scriptHelper';
 dotEnv.config();
 
 const BATCH_SIZE = 200;

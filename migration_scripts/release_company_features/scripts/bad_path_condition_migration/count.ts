@@ -1,6 +1,7 @@
 import dotEnv from 'dotenv';
 import { Connection } from 'mongoose';
-import { loginToDatabase } from '../../../../mongoose';
+import { loginToDatabase } from '../../../mongoose';
+import { printProgress, printStartScript } from '../../scriptHelper';
 import {
     AllPossibleConditions,
     AllPossibleWaypoints,
@@ -11,7 +12,6 @@ import {
     Path,
 } from './interfaces';
 import { WorldModel } from './schemas';
-import { printProgress, printStartScript } from './scriptHelper';
 dotEnv.config();
 
 const BATCH_SIZE = 200;
@@ -119,7 +119,7 @@ const hasChangeDetectedInWorld = ({
 };
 
 const countWorldsToProcess = (c: Connection) => WorldModel(c).countDocuments().exec();
-const findWorldBatch = (c: Connection, skip: number) => WorldModel(c).find({}).skip(skip).limit(BATCH_SIZE).lean().exec();
+const findWorldBatch = (c: Connection, skip: number) => WorldModel(c).find().skip(skip).limit(BATCH_SIZE).lean().exec();
 
 const countPathsBadConditions = async () => {
     const connection = await loginToDatabase(process.env.PROFESOR_DATABASE!);
