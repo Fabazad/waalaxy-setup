@@ -320,6 +320,8 @@ services:
             MIRAGE_TOKEN: eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJleHBpcmF0aW9uRGF0ZSI6IjIxMjAtMDMtMzFUMTY6NDI6MjYuNDYzWiIsInBlcm1pc3Npb25zIjpbIlNhYVNUb2tlbiJdfQ.yCvExMyJ8CBvRsfjRsD6eAaQrajkjnj9mFlV3iP4S4A
             PROSPECTIN_MIRAGE_TOKEN: eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJleHBpcmF0aW9uRGF0ZSI6IjIxMTktMTEtMTRUMTU6MTE6NTQuMzMxWiIsInBlcm1pc3Npb25zIjpbIlNhYVNUb2tlbiJdfQ.Q6cI6GBT77tbRxXQndwlNDAbeO1JtwfFUFPoDsWiois
             LIFELINE_TOKEN: token
+            PROSPECTIN_URL: https://staging-prospectin-api.herokuapp.com
+            PROSPECTIN_TOKEN: eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJfaWQiOiI1ZTgxZDc5MmQzYmZiMzAwMTdhOGQ0NjAiLCJsaW5rZWRpbklkIjoiODA0NzgyNzY1In0.PP_EByIAHezFb88FNIR41OQWEd26BNckGFIzItnbDec
         ports:
             - '5008:5008'
         volumes:
