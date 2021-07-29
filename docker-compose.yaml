@@ -16,6 +16,7 @@ services:
             MONGODB_URI_TEST: mongodb://mongo:27017/OttoTest
             DOCUMENTATION_USER: admin
             DOCUMENTATION_PASSWORD: admin
+            EVENT_PROCESS_TIMEOUT_MS: 5000
         ports:
             - '6666:6666'
             - '9229:9229'

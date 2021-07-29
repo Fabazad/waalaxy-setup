@@ -194,6 +194,13 @@ const repositories: Repositories = {
         folderName: 'shiva-client',
         basePath: 'back/packages',
     },
+    'otto-ui': {
+        url: 'git@github.com:Waapi-Pro/otto-ui.git',
+        developingBranch: 'develop',
+        setupCommand: 'npm install',
+        folderName: 'otto-ui',
+        basePath: 'front/services',
+    }
 };
 
 const execCommand = (command: string, options: ExecOptions): Promise<true> => {
