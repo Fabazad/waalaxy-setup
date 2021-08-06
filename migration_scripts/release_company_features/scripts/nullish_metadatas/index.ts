@@ -1,8 +1,10 @@
 import Axios from 'axios';
 import dayjs from 'dayjs';
 import dotEnv from 'dotenv';
+import { loginToDatabase } from '../../../../mongoose';
 import { printProgress, printStartScript } from '../../../scriptHelper';
 import { SEARCH_QUERY, SLACK_BATCH_SIZE, SLACK_PAUSE_BETWEEN_BATCH } from './constants';
+import { MetadataModel } from './schemas';
 import { NullishMetadatas } from './types';
 
 dotEnv.config();
@@ -27,8 +29,9 @@ const getNullishMetadatasMessages = async ({ start }: { start: number }): Promis
     return data.messages.matches;
 };
 
-const nullishMetadatas = async () => {
+export const nullishMetadatas = async () => {
     printStartScript('Nullish metadatas');
+    const goulagDatabase = await loginToDatabase(process.env.GOULAG_DATABASE!);
     if (!process.env.SLACK_USER_TOKEN) {
         console.log('Error: no SLACK_USER_TOKEN in .env');
         process.exit(1);
@@ -71,6 +74,15 @@ const nullishMetadatas = async () => {
         .filter(([user]) => result[user].count > 1)
         .map(([user, data]) => ({ user, ...data }));
     console.log(errored);
+
+    await MetadataModel(goulagDatabase).bulkWrite(
+        Object.entries(errored).map(([user, { firstDate }]) => ({
+            updadeOne: {
+                filter: { user },
+                update: { latestRecordedConnectionTime: firstDate },
+            },
+        })),
+    );
 
     process.exit(1);
 };
