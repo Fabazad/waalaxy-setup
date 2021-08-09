@@ -63,10 +63,16 @@ const getTravelersBatch = (c: Connection): Promise<IOldTraveler[]> =>
 
 const bulkUpdateTravelers = (
     c: Connection,
-    updates: { travelerId: Schema.Types.ObjectId; worldId: Schema.Types.ObjectId; status: TravelerStatus; currentStop: Stop }[],
+    updates: {
+        travelerId: Schema.Types.ObjectId;
+        worldId: Schema.Types.ObjectId;
+        status: TravelerStatus;
+        currentStop: Stop;
+        previousWorldIndex?: number;
+    }[],
 ) =>
     NewTravelerModel(c).bulkWrite(
-        updates.map(({ travelerId, worldId, status, currentStop }) => ({
+        updates.map(({ travelerId, worldId, status, currentStop, previousWorldIndex }) => ({
             updateOne: {
                 filter: {
                     _id: travelerId,
@@ -76,10 +82,24 @@ const bulkUpdateTravelers = (
                 update: {
                     'travelState.$.status': status,
                     'travelState.$.currentStop': currentStop,
+                    ...(typeof previousWorldIndex === 'number'
+                        ? {
+                              previousWorldIndex,
+                          }
+                        : {
+                              previousWorldIndex: null,
+                          }),
                 },
             },
         })),
+        {
+            ordered: false,
+        },
     );
+
+const hasPreviousWorld = (traveler: IOldTraveler): boolean => traveler.travelStates.length > 1;
+
+const getPreviousWorldIndex = (traveler: IOldTraveler): number => traveler.travelStates.length - 1;
 
 export const updateTravelersTravelStates = async () => {
     console.log('Running updateTravelersTravelStates');
@@ -104,6 +124,7 @@ export const updateTravelersTravelStates = async () => {
                 currentStop: t.currentStop,
                 worldId: t.world,
                 status: t.status,
+                previousWorldIndex: hasPreviousWorld(t) ? getPreviousWorldIndex(t) : undefined,
             })),
         );
 
