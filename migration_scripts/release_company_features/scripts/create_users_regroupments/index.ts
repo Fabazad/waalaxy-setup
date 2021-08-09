@@ -2,7 +2,7 @@ import dotEnv from 'dotenv';
 import { Connection, Types } from 'mongoose';
 import { loginToDatabase } from '../../../../mongoose';
 import { Profile, UsersRegroupment } from './interfaces';
-import { ProspectModel, UserModel, UserPermissionsModel, UsersRegroupmentModel } from './schemas';
+import { ProfileModel, ProspectModel, UserModel, UserPermissionsModel, UsersRegroupmentModel } from './schemas';
 
 const PAUSE_BETWEEN_BATCH = 0;
 const BATCH_SIZE = 1000;
@@ -43,12 +43,13 @@ const getDuplicatedProspects = async ({
     c: Connection;
     users: Array<string>;
 }): Promise<Array<{ profile: Profile; prospects: Array<{ _id: string; owner: string }> }>> => {
-    const duplicates: Array<{
+    const result: Array<{
         _id: string;
-        profile: Profile;
+        profile: Pick<Profile, '_id'>;
         prospects: Array<{ _id: string; owner: string }>;
         count: number;
     }> = await ProspectModel(c).aggregate([
+        { $project: { _id: 1, expiresAt: 1, user: 1, profile: { _id: 1 } } },
         { $match: { expiresAt: { $exists: false }, user: { $in: users.map((u) => Types.ObjectId(u)) } } },
         {
             $group: {
@@ -61,7 +62,14 @@ const getDuplicatedProspects = async ({
         { $match: { count: { $gt: 1 } } },
     ]);
 
-    return duplicates.map(({ profile, prospects }) => ({ profile, prospects }));
+    const duplicates = result.map(({ profile, prospects }) => ({ profile, prospects }));
+    const profiles = (await Promise.all(duplicates.map(({ profile }) => ProfileModel(c).findOne({ _id: profile._id }).lean().exec()))).filter(
+        (p) => !!p,
+    ) as Array<Profile>;
+    return duplicates.map(({ profile, prospects }) => ({
+        profile: profiles.find((p) => p._id.toString() === profile._id.toString()) ?? profile,
+        prospects,
+    }));
 };
 
 export const createUsersRegroupment = async () => {
@@ -112,12 +120,25 @@ export const createUsersRegroupment = async () => {
 
     console.log(`Going to check duplicates for ${Object.keys(companiesToCreate).length} companies`);
 
-    await Promise.all(
-        Object.entries(companiesToCreate).map(async ([company, users]) => {
-            const duplicatedProspects = await getDuplicatedProspects({ c: goulagDatabase, users });
-            await createOrUpdateCompanyUsersRegroupment(goulagDatabase, users, company, duplicatedProspects);
-        }),
-    );
+    const awaitableCompaniesToCreate = Object.entries(companiesToCreate).map(([company, users]) => ({ company, users }));
+    let processedCompanies = 0;
+
+    for (const companyToCreate of awaitableCompaniesToCreate) {
+        const { company, users } = companyToCreate;
+        const duplicatedProspects = await getDuplicatedProspects({ c: goulagDatabase, users });
+        await createOrUpdateCompanyUsersRegroupment(goulagDatabase, users, company, duplicatedProspects);
+        await new Promise((r) => {
+            setTimeout(r, PAUSE_BETWEEN_BATCH);
+        });
+
+        processedCompanies += 1;
+        console.log(
+            `Processed ${processedCompanies}/${Object.keys(companiesToCreate).length} companies. (${Math.min(
+                Math.round((processedCompanies / Object.keys(companiesToCreate).length) * 100 * 100) / 100,
+                100,
+            )}%)`,
+        );
+    }
 
     console.log('exiting');
 
