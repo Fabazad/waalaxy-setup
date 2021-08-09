@@ -15,6 +15,7 @@ const countTravelersToUpdate = (c: Connection): Promise<number> =>
             'status.value': {
                 $in: ['traveling', 'paused'],
             },
+            'travelStates.0': { $exists: true },
             travelStates: {
                 $elemMatch: {
                     status: { $exists: false },
@@ -29,6 +30,7 @@ const getAllTravelersIdsToUpdate = async (c: Connection): Promise<Schema.Types.O
             'status.value': {
                 $in: ['traveling', 'paused'],
             },
+            'travelStates.0': { $exists: true },
             travelStates: {
                 $elemMatch: {
                     status: { $exists: false },
@@ -36,6 +38,7 @@ const getAllTravelersIdsToUpdate = async (c: Connection): Promise<Schema.Types.O
             },
         })
         .select({ _id: 1 })
+        .lean()
         .exec();
     return r.map<Schema.Types.ObjectId>((t) => t._id);
 };
@@ -46,6 +49,7 @@ const getTravelersBatch = (c: Connection): Promise<IOldTraveler[]> =>
             'status.value': {
                 $in: ['traveling', 'paused'],
             },
+            'travelStates.0': { $exists: true },
             travelStates: {
                 $elemMatch: {
                     status: { $exists: false },
@@ -53,12 +57,14 @@ const getTravelersBatch = (c: Connection): Promise<IOldTraveler[]> =>
             },
         })
         .limit(BATCH_SIZE)
+        .sort({ _id: -1 })
         .select({
             _id: 1,
             status: 1,
             currentStop: 1,
             world: 1,
         })
+        .lean()
         .exec();
 
 const bulkUpdateTravelers = (
@@ -70,8 +76,9 @@ const bulkUpdateTravelers = (
         currentStop?: Stop;
         previousWorldIndex?: number;
     }[],
-) =>
-    NewTravelerModel(c).bulkWrite(
+) => {
+    // console.log(updates);
+    return NewTravelerModel(c).bulkWrite(
         updates.map(({ travelerId, worldId, status, currentStop, previousWorldIndex }) => ({
             updateOne: {
                 filter: {
@@ -83,13 +90,7 @@ const bulkUpdateTravelers = (
                     $set: {
                         'travelStates.$.status': status,
                         'travelStates.$.currentStop': currentStop,
-                        ...(typeof previousWorldIndex === 'number'
-                            ? {
-                                  'travelStates.$.previousTravelState': previousWorldIndex,
-                              }
-                            : {
-                                  'travelStates.$.previousTravelState': null,
-                              }),
+                        ...(typeof previousWorldIndex === 'number' ? { 'travelStates.$.previousTravelState': previousWorldIndex } : {}),
                     },
                 },
             },
@@ -98,7 +99,7 @@ const bulkUpdateTravelers = (
             ordered: false,
         },
     );
-
+};
 const hasPreviousWorld = (traveler: IOldTraveler): boolean => traveler.travelStates?.length > 1;
 
 const getPreviousWorldIndex = (traveler: IOldTraveler): number => traveler.travelStates?.length - 1;
@@ -129,9 +130,11 @@ export const updateTravelersTravelStates = async () => {
             })),
         );
 
+        console.log(result);
+
         updatedTravelers += result.modifiedCount ?? 0;
 
-        console.log(`Updated ${result.modifiedCount} travelers`);
+        console.log(`\nUpdated ${result.modifiedCount} travelers`);
 
         await new Promise((r) => {
             setTimeout(r, PAUSE_BETWEEN_BATCH);

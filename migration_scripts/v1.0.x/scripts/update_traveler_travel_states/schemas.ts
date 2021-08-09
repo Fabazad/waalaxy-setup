@@ -88,4 +88,4 @@ const TravelerSchema = new Schema(
 
 export const OldTravelerModel = (c: Connection) => c.model<IOldTraveler & Document>('OldTraveler', OldTravelerSchema, 'travelers');
 
-export const NewTravelerModel = (c: Connection) => c.model<INewTraveler & Document>('NewTraveler', TravelerSchema, 'Travelers');
+export const NewTravelerModel = (c: Connection) => c.model<INewTraveler & Document>('NewTraveler', TravelerSchema, 'travelers');

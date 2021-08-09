@@ -30,7 +30,7 @@ export type NewTravelStatesItem<B = Schema.Types.ObjectId> = {
     currentStop?: Stop;
 };
 
-export const TRAVELER_STATUSES = ['traveling', 'paused', 'stopped', 'error', 'finished'] as const;
+export const TRAVELER_STATUSES = ['traveling', 'paused', 'stopped', 'hasReplied', 'error', 'finished'] as const;
 
 export type TravelerStatus = { value: typeof TRAVELER_STATUSES[number]; reason?: string };
 
