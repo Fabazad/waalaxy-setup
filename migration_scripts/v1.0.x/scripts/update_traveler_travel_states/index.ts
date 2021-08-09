@@ -67,7 +67,7 @@ const bulkUpdateTravelers = (
         travelerId: Schema.Types.ObjectId;
         worldId: Schema.Types.ObjectId;
         status: TravelerStatus;
-        currentStop: Stop;
+        currentStop?: Stop;
         previousWorldIndex?: number;
     }[],
 ) =>
@@ -113,7 +113,7 @@ export const updateTravelersTravelStates = async () => {
     let processedTravelers = 0;
     let updatedTravelers = 0;
 
-    await getAllTravelersIdsToUpdate(profesorDatabase);
+    // await getAllTravelersIdsToUpdate(profesorDatabase);
     while (processedTravelers < travelersToUpdateCount) {
         const travelersBatch = await getTravelersBatch(profesorDatabase);
 
@@ -128,7 +128,7 @@ export const updateTravelersTravelStates = async () => {
             })),
         );
 
-        updatedTravelers += result.modifiedCount;
+        updatedTravelers += result.modifiedCount ?? 0;
 
         console.log(`Updated ${result.modifiedCount} travelers`);
 
@@ -139,6 +139,7 @@ export const updateTravelersTravelStates = async () => {
         processedTravelers = BATCH_SIZE + processedTravelers > travelersToUpdateCount ? travelersToUpdateCount : processedTravelers + BATCH_SIZE;
 
         printProgress(processedTravelers, travelersToUpdateCount, now);
+        console.log('updated', updatedTravelers);
     }
 
     console.log('Done !');
