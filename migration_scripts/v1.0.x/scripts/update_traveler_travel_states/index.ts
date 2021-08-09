@@ -97,9 +97,9 @@ const bulkUpdateTravelers = (
         },
     );
 
-const hasPreviousWorld = (traveler: IOldTraveler): boolean => traveler.travelStates.length > 1;
+const hasPreviousWorld = (traveler: IOldTraveler): boolean => traveler.travelStates?.length > 1;
 
-const getPreviousWorldIndex = (traveler: IOldTraveler): number => traveler.travelStates.length - 1;
+const getPreviousWorldIndex = (traveler: IOldTraveler): number => traveler.travelStates?.length - 1;
 
 export const updateTravelersTravelStates = async () => {
     console.log('Running updateTravelersTravelStates');
