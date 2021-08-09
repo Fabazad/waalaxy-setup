@@ -85,10 +85,10 @@ const bulkUpdateTravelers = (
                         'travelStates.$.currentStop': currentStop,
                         ...(typeof previousWorldIndex === 'number'
                             ? {
-                                  'travelStates.$.previousWorldIndex': previousWorldIndex,
+                                  'travelStates.$.previousTravelState': previousWorldIndex,
                               }
                             : {
-                                  'travelStates.$.previousWorldIndex': null,
+                                  'travelStates.$.previousTravelState': null,
                               }),
                     },
                 },
@@ -118,7 +118,6 @@ export const updateTravelersTravelStates = async () => {
     // await getAllTravelersIdsToUpdate(profesorDatabase);
     while (processedTravelers < travelersToUpdateCount) {
         const travelersBatch = await getTravelersBatch(profesorDatabase);
-
         const result = await bulkUpdateTravelers(
             profesorDatabase,
             travelersBatch.map((t) => ({
