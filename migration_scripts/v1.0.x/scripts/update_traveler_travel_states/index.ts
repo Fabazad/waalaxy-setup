@@ -80,15 +80,17 @@ const bulkUpdateTravelers = (
                     'travelStates.world': worldId,
                 },
                 update: {
-                    'travelState.$.status': status,
-                    'travelState.$.currentStop': currentStop,
-                    ...(typeof previousWorldIndex === 'number'
-                        ? {
-                              previousWorldIndex,
-                          }
-                        : {
-                              previousWorldIndex: null,
-                          }),
+                    $set: {
+                        'travelStates.$.status': status,
+                        'travelStates.$.currentStop': currentStop,
+                        ...(typeof previousWorldIndex === 'number'
+                            ? {
+                                  'travelStates.$.previousWorldIndex': previousWorldIndex,
+                              }
+                            : {
+                                  'travelStates.$.previousWorldIndex': null,
+                              }),
+                    },
                 },
             },
         })),
@@ -127,6 +129,8 @@ export const updateTravelersTravelStates = async () => {
                 previousWorldIndex: hasPreviousWorld(t) ? getPreviousWorldIndex(t) : undefined,
             })),
         );
+
+        console.log(result);
 
         updatedTravelers += result.modifiedCount ?? 0;
 
