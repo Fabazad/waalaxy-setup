@@ -77,7 +77,7 @@ export const nullishMetadatas = async () => {
 
     await MetadataModel(goulagDatabase).bulkWrite(
         errored.map(({ firstDate, user }) => ({
-            updadeOne: {
+            updateOne: {
                 filter: { user },
                 update: { latestRecordedConnectionTime: firstDate },
             },
