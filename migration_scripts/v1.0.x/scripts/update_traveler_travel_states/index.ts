@@ -129,8 +129,6 @@ export const updateTravelersTravelStates = async () => {
             })),
         );
 
-        console.log(result);
-
         updatedTravelers += result.modifiedCount ?? 0;
 
         console.log(`Updated ${result.modifiedCount} travelers`);
