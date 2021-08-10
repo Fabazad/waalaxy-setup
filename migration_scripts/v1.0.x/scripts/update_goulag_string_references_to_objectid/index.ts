@@ -19,9 +19,7 @@ const getPotentiallyInvalidProspectListBatch = (c: Connection, start: number): P
         .sort({ _id: -1 })
         .select({
             _id: 1,
-            status: 1,
-            currentStop: 1,
-            world: 1,
+            user: 1,
         })
         .lean()
         .exec();
@@ -70,6 +68,7 @@ export const updateGoulagStringReferencesToObjectId = async () => {
     // await getAllTravelersIdsToUpdate(goulagDatabase);
     while (processedProspectLists < prospectListsToCheck) {
         const prospectListBatch = await getPotentiallyInvalidProspectListBatch(goulagDatabase, processedProspectLists);
+
         const result = await bulkUpdateProspectLists(
             goulagDatabase,
             prospectListBatch.filter(isInvalidProspectList).map(({ _id, user }) => ({
@@ -78,8 +77,6 @@ export const updateGoulagStringReferencesToObjectId = async () => {
                 userId: Types.ObjectId.createFromHexString(user),
             })),
         );
-
-        console.log(result);
 
         updatedProspectLists += result.modifiedCount ?? 0;
 
@@ -93,9 +90,9 @@ export const updateGoulagStringReferencesToObjectId = async () => {
             BATCH_SIZE + processedProspectLists > prospectListsToCheck ? prospectListsToCheck : processedProspectLists + BATCH_SIZE;
 
         printProgress(processedProspectLists, prospectListsToCheck, now);
-        console.log('updated', updatedProspectLists);
     }
 
+    console.log('updated prospectList', updatedProspectLists);
     console.log('Done !');
 
     process.exit();

@@ -12,7 +12,7 @@ const InvalidProspectListSchema = new Schema(
 
 const CorrectProspectListSchema = new Schema(
     {
-        user: String,
+        user: Schema.Types.ObjectId,
         name: String,
         expiresAt: { type: Date, index: { expires: 0 } },
     },
@@ -20,7 +20,7 @@ const CorrectProspectListSchema = new Schema(
 );
 
 export const CorrectProspectListModel = (c: Connection) =>
-    c.model<ICorrectProspectList & Document>('ProspectList', CorrectProspectListSchema, 'prospectlists');
+    c.model<ICorrectProspectList & Document>('CorrectProspectListModel', CorrectProspectListSchema, 'prospectlists');
 
 export const InvalidProspectListModel = (c: Connection) =>
-    c.model<IInvalidProspectList & Document>('ProspectList', InvalidProspectListSchema, 'prospectlists');
+    c.model<IInvalidProspectList & Document>('InvalidProspectListModel', InvalidProspectListSchema, 'prospectlists');
