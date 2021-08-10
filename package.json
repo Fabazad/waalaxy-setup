@@ -14,6 +14,7 @@
     "license": "ISC",
     "dependencies": {
         "@types/lodash": "^4.14.170",
+        "@waapi/async-redis-client": "^1.0.5",
         "@waapi/mirage": "^1.0.36",
         "@waapi/onu": "^2.0.31",
         "axios": "^0.20.0",
