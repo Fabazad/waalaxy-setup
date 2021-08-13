@@ -74,7 +74,7 @@ async function updateUserLilith() {
         ]);
 
         usersBatch.forEach(async (userBase, i) => {
-            if (i % 10) {
+            if (i % 10 === 0) {
                 await new Promise((r) => {
                     setTimeout(r, PAUSE_BETWEEN_UPDATE);
                 });
