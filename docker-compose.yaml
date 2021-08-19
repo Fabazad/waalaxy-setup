@@ -142,7 +142,7 @@ services:
             REDIS_URL: redis://redis:6379
             OTTO_URL: ws://otto:6666
             ZILEAN_BASE_URL: http://zilean:5007
-            OTTO_TOKEN: eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJhdXRob3IiOiJzdGFyZ2F0ZSJ9.y8VIfAsWL22nlpWMWKsv_9ebUCJ1xziQ1Qh6srjMTg8
+            OTTO_TOKEN: eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJhdXRob3IiOiJzaGl2YSJ9.99Qhq6Ah7e_EGeiV9gr9haA1xYZ7xCf-lv_PyHNEV0g
             NODE_ENV: E2E
             MONGODB_URI: mongodb://mongo:27017/Shiva
             MONGODB_URI_TEST: mongodb://mongo:27017/ShivaTest
