@@ -172,7 +172,7 @@ services:
             OTTO_URL: ws://otto:6666
             ZILEAN_BASE_URL: http://zilean:5007
             GOULAG_BASE_URL: http://goulag:5002/graphql
-            OTTO_TOKEN: eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJhdXRob3IiOiJzdGFyZ2F0ZSJ9.y8VIfAsWL22nlpWMWKsv_9ebUCJ1xziQ1Qh6srjMTg8
+            OTTO_TOKEN: eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJhdXRob3IiOiJoZXJtZXMifQ.0wZozOqib6QLWm57mX38pYhjMYqiJSD1l77EZc4rtg0
             SECRET: kzenjf68zef/*zef-gergrege
             GOOGLE_CLIENT_ID: 141637350927-kfbhgp5p13tf9r5e9c2vlr7cid20m19u.apps.googleusercontent.com
             GOOGLE_CLIENT_SECRET: B29hgBJUFUOQF2tRsZtxeyPI
