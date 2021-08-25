@@ -151,6 +151,7 @@ services:
             GOULAG_URL: http://goulag:5002/graphql
             BOUNCER_API_URL: http://bouncer:5008
             LIFELINE_TOKEN: token
+            REPORT_SLACK_HOOK_URL: https://hooks.slack.com/services/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
         ports:
             - '5003:5003'
         volumes:
