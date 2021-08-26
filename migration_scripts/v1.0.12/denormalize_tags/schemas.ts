@@ -145,4 +145,58 @@ const ProspectSchema = new Schema(
     { timestamps: true },
 );
 
-export const ProspectModel = (c: Connection) => c.model<Prospect & Document>('Prospect', ProspectSchema);
+const OldProspectSchema = new Schema(
+    {
+        profile: { type: ProfileSchema, required: true },
+        customProfile: { type: CustomProfileSchema },
+        prospectList: { type: Schema.Types.ObjectId, ref: 'ProspectList', required: true },
+        user: { type: Schema.Types.ObjectId, required: true },
+        distance: { type: String, enum: ['DISTANCE_1', 'DISTANCE_2', 'DISTANCE_3', 'OUT_OF_NETWORK'] },
+        status: { type: String, enum: ['connected', 'pending', 'not_connected'] },
+        expiresAt: { type: Date, index: { expires: 0 } },
+        customData: { type: {}, default: {} },
+        oneToOneConversationId: { type: String },
+        isRepliedMonitored: { type: Boolean, default: false },
+        isSeenMonitored: { type: Boolean, default: false },
+        history: {
+            type: [
+                {
+                    action: { type: String },
+                    executionDate: { type: Date, required: true },
+                    name: {
+                        type: String,
+                        required: true,
+                    },
+                    params: {
+                        messageContent: { type: String },
+                        messageId: { type: String },
+                        connectedAt: { type: Number },
+                        emailId: { type: String },
+                        text: { type: String },
+                        subject: { type: String },
+                        sentAt: { type: Date },
+                    },
+                },
+            ],
+            default: [],
+        },
+        hasBeenEnriched: { type: Boolean },
+        tags: {
+            type: [{ type: Schema.Types.ObjectId, ref: 'Tag', required: false }],
+            required: false,
+            default: [],
+        },
+        origin: {
+            type: {
+                name: { type: String, required: true },
+                trigger: String,
+            },
+            required: false,
+        },
+    },
+    { timestamps: true },
+);
+
+export const ProspectModel = (c: Connection) => c.model<Prospect & Document>('Prospect', ProspectSchema, 'prospects');
+
+export const OldProspectModel = (c: Connection) => c.model<Prospect & Document>('OldProspect', OldProspectSchema, 'prospects');

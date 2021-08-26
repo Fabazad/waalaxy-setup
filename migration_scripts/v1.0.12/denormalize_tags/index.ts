@@ -1,21 +1,21 @@
 import dotEnv from 'dotenv';
 import { loginToDatabase } from '../../../mongoose';
 import { Connection, Types } from 'mongoose';
-import { ProspectModel, TagModel } from './schemas';
-import { Prospect, Tag } from './interfaces';
+import { OldProspectModel, ProspectModel, TagModel } from './schemas';
+import { Tag } from './interfaces';
 dotEnv.config();
 
-const BATCH_SIZE = 5000;
-const PAUSE_BETWEEN_BATCH = 500;
+const BATCH_SIZE = 20;
+const PAUSE_BETWEEN_BATCH = 100;
 
-const countProspects = (c: Connection) =>
-    ProspectModel(c)
-        .countDocuments({ tags: { $exists: true } })
+const countTags = (c: Connection) =>
+    TagModel(c)
+        .countDocuments({})
         .exec();
 
-const findProspectBatch = (c: Connection, skip: number): Promise<Array<Prospect>> =>
-    ProspectModel(c)
-        .find({ tags: { $exists: true } }, 'tags _id')
+const findTagBatch = (c: Connection, skip: number): Promise<Array<Tag>> =>
+    TagModel(c)
+        .find()
         .skip(skip)
         .limit(BATCH_SIZE)
         .lean()
@@ -25,25 +25,16 @@ const denormalizeTags = async () => {
     console.log('Starting denormalizeTags');
     const goulagDatabase = await loginToDatabase(process.env.GOULAG_DATABASE!);
 
-    const totalProspectsCount = await countProspects(goulagDatabase);
-    console.log(`Found ${totalProspectsCount} Prospects`);
+    const totalTagsCount = await countTags(goulagDatabase);
+    console.log(`Found ${totalTagsCount} Tags`);
 
-    let processedProspects = 0;
+    let processedTags = 0;
 
-    while (processedProspects < totalProspectsCount) {
-        const prospects = await findProspectBatch(goulagDatabase, processedProspects);
-        const prospectsToPopulate = prospects.filter((p) => p.tags !== undefined && p.tags.length > 0);
-
-        const tagIds = prospectsToPopulate.reduce<Array<string>>((res, prospect) => {
-            if (prospect.tags === undefined) return res;
-            const unpopulatedTags = prospect.tags.filter((tag) => Types.ObjectId.isValid(tag.toString())).map((t) => t.toString());
-            return [...res, ...unpopulatedTags];
-        }, []);
-
-        const tags = await TagModel(goulagDatabase)
-            .find({ _id: { $in: tagIds } })
-            .lean()
-            .exec();
+    while (processedTags < totalTagsCount) {
+        const tags = await findTagBatch(goulagDatabase, processedTags);
+        const tagIds = tags.map(t => t._id.toString());
+        const prospectsToPopulate = await OldProspectModel(goulagDatabase).find({ tags: { $elemMatch: { $in: tagIds }}}).lean().exec()
+        console.log("affected prospects", prospectsToPopulate.length)
 
         await ProspectModel(goulagDatabase).bulkWrite(
             prospectsToPopulate.map((prospect) => {
@@ -69,11 +60,11 @@ const denormalizeTags = async () => {
             setTimeout(r, PAUSE_BETWEEN_BATCH);
         });
 
-        processedProspects = Math.min(processedProspects + BATCH_SIZE, totalProspectsCount);
+        processedTags = Math.min(processedTags + BATCH_SIZE, totalTagsCount);
 
         console.log(
-            `${processedProspects}/${totalProspectsCount} processed users (${
-                Math.round((processedProspects / totalProspectsCount) * 100 * 100) / 100
+            `${processedTags}/${totalTagsCount} processed tags (${
+                Math.round((processedTags / totalTagsCount) * 100 * 100) / 100
             }%)`,
         );
     }
