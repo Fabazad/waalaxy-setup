@@ -370,5 +370,10 @@ export interface UsersRegroupment {
     _id: mongoose.Schema.Types.ObjectId | string;
     users: Array<string>;
     company?: string;
-    duplicatedProspects: Array<{ profile: Profile; prospects: Array<{ owner: string; _id: mongoose.Schema.Types.ObjectId | string }> }>;
+}
+
+export interface DuplicatedProspect {
+    _id: mongoose.Schema.Types.ObjectId | string;
+    profile: Profile;
+    prospects: Array<{ user: string; _id: mongoose.Schema.Types.ObjectId | string }>;
 }

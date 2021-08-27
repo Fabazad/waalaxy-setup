@@ -1,5 +1,16 @@
 import { Connection, Document, Schema } from 'mongoose';
-import { ICompany, IUser, IUserPermission, PermissionGroupName, PlanName, Profile, Prospect, seatStatuses, UsersRegroupment } from './interfaces';
+import {
+    DuplicatedProspect,
+    ICompany,
+    IUser,
+    IUserPermission,
+    PermissionGroupName,
+    PlanName,
+    Profile,
+    Prospect,
+    seatStatuses,
+    UsersRegroupment,
+} from './interfaces';
 
 // Stargate
 
@@ -293,22 +304,22 @@ export const ProspectModel = (c: Connection) => c.model<Prospect & Document>('Pr
 const usersRegroupmentSchema = new Schema({
     company: { type: String, required: false },
     users: { type: [String], required: true },
-    duplicatedProspects: {
-        type: [
-            {
-                profile: { type: ProfileSchema, required: true },
-                prospects: {
-                    type: [
-                        {
-                            _id: { type: Schema.Types.ObjectId, ref: 'Prospect', required: true },
-                            owner: { type: String, required: true },
-                        },
-                    ],
-                    required: true,
-                },
-            },
-        ],
-    },
 });
 
 export const UsersRegroupmentModel = (c: Connection) => c.model<UsersRegroupment & Document>('UsersRegroupment', usersRegroupmentSchema);
+
+const duplicatedProspectSchema = new Schema({
+    profile: { type: ProfileSchema, required: true },
+    prospects: {
+        type: [
+            {
+                _id: { type: Schema.Types.ObjectId, ref: 'Prospect', required: true },
+                user: { type: String, required: true },
+            },
+        ],
+        required: true,
+    },
+    usersRegroupment: { type: Schema.Types.ObjectId, ref: 'UsersRegroupment', required: true },
+});
+
+export const DuplicatedProspectModel = (c: Connection) => c.model<DuplicatedProspect & Document>('DuplicatedProspect', duplicatedProspectSchema);

@@ -1,9 +1,10 @@
 import dotEnv from 'dotenv';
+import _ from 'lodash';
 import { Connection, Types } from 'mongoose';
 import { loginToDatabase } from '../../../mongoose';
 import { printProgress, printStartScript } from '../../scriptHelper';
-import { Profile, UsersRegroupment } from './interfaces';
-import { ProfileModel, ProspectModel, UserModel, UserPermissionsModel, UsersRegroupmentModel } from './schemas';
+import { Profile } from './interfaces';
+import { DuplicatedProspectModel, ProfileModel, ProspectModel, UserModel, UserPermissionsModel, UsersRegroupmentModel } from './schemas';
 
 const PAUSE_BETWEEN_BATCH = 0;
 const BATCH_SIZE = 1000;
@@ -20,21 +21,16 @@ const getUserPermissions = (c: Connection, users: Array<string>) =>
         .exec();
 
 const findOrCreateUsersRegroupment = async (c: Connection, user: string) => {
-    const usersRegroupment = await UsersRegroupmentModel(c).findOne({ users: user }, { duplicatedProspects: 0 }).lean().exec();
+    const usersRegroupment = await UsersRegroupmentModel(c).findOne({ users: user }).lean().exec();
     if (usersRegroupment) return usersRegroupment;
-    return UsersRegroupmentModel(c).create({ users: [user], duplicatedProspects: [] });
+    return UsersRegroupmentModel(c).create({ users: [user] });
 };
 
-const createOrUpdateCompanyUsersRegroupment = async (
-    c: Connection,
-    users: Array<string>,
-    company: string,
-    duplicatedProspects: UsersRegroupment['duplicatedProspects'],
-) => {
-    const usersRegroupment = await UsersRegroupmentModel(c).findOne({ company }, { duplicatedProspects: 0 }).lean().exec();
-    if (usersRegroupment)
-        return UsersRegroupmentModel(c).updateOne({ _id: usersRegroupment._id.toString() }, { $set: { duplicatedProspects, users } });
-    return UsersRegroupmentModel(c).create({ company, users, duplicatedProspects });
+const createOrUpdateCompanyUsersRegroupment = async (c: Connection, users: Array<string>, company: string) => {
+    const usersRegroupment = await UsersRegroupmentModel(c).findOne({ company }).lean().exec();
+
+    if (usersRegroupment) return usersRegroupment;
+    return UsersRegroupmentModel(c).create({ company, users });
 };
 
 const getDuplicatedProspects = async ({
@@ -43,25 +39,27 @@ const getDuplicatedProspects = async ({
 }: {
     c: Connection;
     users: Array<string>;
-}): Promise<Array<{ profile: Profile; prospects: Array<{ _id: string; owner: string }> }>> => {
+}): Promise<Array<{ profile: Profile; prospects: Array<{ _id: string; user: string }> }>> => {
     const result: Array<{
         _id: string;
         profile: Pick<Profile, '_id'>;
-        prospects: Array<{ _id: string; owner: string }>;
+        prospects: Array<{ _id: string; user: string }>;
         count: number;
-    }> = await ProspectModel(c).aggregate([
-        { $project: { _id: 1, expiresAt: 1, user: 1, profile: { _id: 1 } } },
-        { $match: { expiresAt: { $exists: false }, user: { $in: users.map((u) => Types.ObjectId(u)) } } },
-        {
-            $group: {
-                _id: '$profile._id',
-                prospects: { $push: { _id: '$_id', owner: '$user' } },
-                profile: { $first: '$profile' },
-                count: { $sum: 1 },
+    }> = await ProspectModel(c)
+        .aggregate([
+            { $project: { _id: 1, expiresAt: 1, user: 1, profile: { _id: 1 } } },
+            { $match: { expiresAt: { $exists: false }, user: { $in: users.map((u) => Types.ObjectId(u)) } } },
+            {
+                $group: {
+                    _id: '$profile._id',
+                    prospects: { $push: { _id: '$_id', user: '$user' } },
+                    profile: { $first: '$profile' },
+                    count: { $sum: 1 },
+                },
             },
-        },
-        { $match: { count: { $gt: 1 } } },
-    ]);
+            { $match: { count: { $gt: 1 } } },
+        ])
+        .allowDiskUse(true);
 
     const duplicates = result.map(({ profile, prospects }) => ({ profile, prospects }));
     const profiles = (await Promise.all(duplicates.map(({ profile }) => ProfileModel(c).findOne({ _id: profile._id }).lean().exec()))).filter(
@@ -73,11 +71,14 @@ const getDuplicatedProspects = async ({
     }));
 };
 
-export const createUsersRegroupment = async () => {
-    printStartScript('Starting createUsersRegroupment');
+export const refactorDuplicatedProspects = async () => {
+    printStartScript('Starting refactorDuplicatedProspects');
     const stargateDatabase = await loginToDatabase(process.env.STARGATE_DATABASE!);
     const bouncerDatabase = await loginToDatabase(process.env.BOUNCER_DATABASE!);
     const goulagDatabase = await loginToDatabase(process.env.GOULAG_DATABASE!);
+
+    await UsersRegroupmentModel(goulagDatabase).deleteMany({}).exec();
+    await DuplicatedProspectModel(goulagDatabase).deleteMany({}).exec();
 
     const usersCount = await UserModel(stargateDatabase).countDocuments();
     console.log(`Found ${usersCount} users`);
@@ -86,8 +87,6 @@ export const createUsersRegroupment = async () => {
     const startTime = Date.now();
 
     while (processedUsers < usersCount - SKIP) {
-        let usersInCompany = 0;
-
         const usersBatch = await getUsers(stargateDatabase, processedUsers + SKIP);
         const permissionsBatch = await getUserPermissions(
             bouncerDatabase,
@@ -102,7 +101,6 @@ export const createUsersRegroupment = async () => {
                 else {
                     const companyId = permissions.company._id.toString();
                     companiesToCreate[companyId] = [...(companiesToCreate[companyId] || []), user._id.toString()];
-                    usersInCompany += 1;
                 }
             }),
         );
@@ -125,7 +123,13 @@ export const createUsersRegroupment = async () => {
     for (const companyToCreate of awaitableCompaniesToCreate) {
         const { company, users } = companyToCreate;
         const duplicatedProspects = await getDuplicatedProspects({ c: goulagDatabase, users });
-        await createOrUpdateCompanyUsersRegroupment(goulagDatabase, users, company, duplicatedProspects);
+        const chunkedDuplicatedProspects = _.chunk(duplicatedProspects, 10000);
+        const companyRegroupment = await createOrUpdateCompanyUsersRegroupment(goulagDatabase, users, company);
+
+        for (const chunk of chunkedDuplicatedProspects) {
+            await DuplicatedProspectModel(goulagDatabase).create(chunk.map((d) => ({ ...d, usersRegroupment: companyRegroupment._id })));
+        }
+
         await new Promise((r) => {
             setTimeout(r, PAUSE_BETWEEN_BATCH);
         });
@@ -139,4 +143,4 @@ export const createUsersRegroupment = async () => {
     process.exit(1);
 };
 
-createUsersRegroupment();
+refactorDuplicatedProspects();
