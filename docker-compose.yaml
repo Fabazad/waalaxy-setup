@@ -104,6 +104,7 @@ services:
             PROFESOR_URL: http://profesor:5001
             SHIVA_URL: http://shiva:5003
             HERMES_URL: http://hermes:5004
+            ENUTROF_URL: http://enutrof:5005
             VOLTAIRE_URL: http://voltaire:5006
             ZILEAN_URL: http://zilean:5007
             JANUS_URL: http://janus:5010
