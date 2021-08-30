@@ -70,7 +70,7 @@ services:
             SHIVA_BASE_URL: http://shiva:5003
             ENUTROF_BASE_URL: http://enutrof:5005
             HERMES_BASE_URL: http://hermes:5004
-            BOUNCER_API_URL: http://bouncer:5008
+            BOUNCER_API_URL: http://bouncer:5008/api
             JANUS_URL: http://janus:5010
             NODE_ENV: E2E
             MONGODB_URI: mongodb://mongo:27017/Profesor
@@ -237,8 +237,8 @@ services:
             DOCUMENTATION_PASSWORD: admin
             OTTO_URL: ws://otto:6666
             OTTO_TOKEN: eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJhdXRob3IiOiJlbnV0cm9mIn0.jD0AkKiPFtigpe8VwUgX7qzWonbd2dfF3eQ5Nd1n3S8
-            E2E_EXTERNAL_API: http://chameleon:6458
-            DROP_CONTACT_API_KEY: 'e2e-test'
+            E2E_EXTERNAL_API: https://api.dropcontact.io
+            DROP_CONTACT_API_KEY: WB8zYE5rGFQXxFXGYKK5TEVXcHG2gl
             ENRICHMENT_CREATION_MAX_INTERVAL: 1000
             MAX_GET_BATCH_RESPONSE_ITERATIONS: 5
             GET_BATCH_RESPONSE_INTERVAL: 200
