@@ -239,6 +239,7 @@ services:
             OTTO_TOKEN: eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJhdXRob3IiOiJlbnV0cm9mIn0.jD0AkKiPFtigpe8VwUgX7qzWonbd2dfF3eQ5Nd1n3S8
             E2E_EXTERNAL_API: https://api.dropcontact.io
             DROP_CONTACT_API_KEY: WB8zYE5rGFQXxFXGYKK5TEVXcHG2gl
+            LIFELINE_TOKEN: token
             ENRICHMENT_CREATION_MAX_INTERVAL: 1000
             MAX_GET_BATCH_RESPONSE_ITERATIONS: 5
             GET_BATCH_RESPONSE_INTERVAL: 200

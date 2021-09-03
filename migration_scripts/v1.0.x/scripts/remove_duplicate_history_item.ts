@@ -148,6 +148,7 @@ export const removeDuplicateHistoryItems = async () => {
     console.log(`${toProcess} prospects to update`);
 
     let processed = 0;
+    let totalSanityzedProspects = 0;
 
     while (processed < toProcess) {
         const prospects = await Prospect.find(
@@ -170,14 +171,24 @@ export const removeDuplicateHistoryItems = async () => {
             .skip(processed)
             .limit(BATCH_SIZE);
 
-        const sanityzedProspects = prospects.map((prospect) => {
+        const sanityzedProspects = prospects.reduce<Array<any>>((acc, prospect) => {
+            let altered = false;
             let hasMessageSeen = false;
             let hasMessageReplied = false;
             let hasAcceptedConnection = false;
             const sanityzedHistory = prospect.history.filter((element: any) => {
-                if (element.name === 'message_replied' && hasMessageReplied) return false;
-                if (element.name === 'message_seen' && hasMessageSeen) return false;
-                if (element.name === 'relationship_connection' && hasAcceptedConnection) return false;
+                if (element.name === 'message_replied' && hasMessageReplied) {
+                    altered = true;
+                    return false;
+                }
+                if (element.name === 'message_seen' && hasMessageSeen) {
+                    altered = true;
+                    return false;
+                }
+                if (element.name === 'relationship_connection' && hasAcceptedConnection) {
+                    altered = true;
+                    return false;
+                }
 
                 if (element.name === 'linkedin_message') {
                     hasMessageReplied = false;
@@ -189,8 +200,9 @@ export const removeDuplicateHistoryItems = async () => {
 
                 return true;
             });
-            return { ...prospect, history: sanityzedHistory };
-        });
+            if (altered) return [...acc, { ...prospect, history: sanityzedHistory }];
+            return acc;
+        }, []);
         const {
             result: { nModified },
         } = await Prospect.bulkWrite(
@@ -201,10 +213,14 @@ export const removeDuplicateHistoryItems = async () => {
                 },
             })),
         );
-        console.log(nModified, '/', prospects.length, 'updated');
-        if (nModified !== prospects.length) throw new Error('Failed to update all');
+        if (nModified !== sanityzedProspects.length) throw new Error('Failed to update all');
         processed += prospects.length;
-        console.log(`${processed}/${toProcess} processed prospects (${Math.round((processed / toProcess) * 100 * 100) / 100}%)`);
+        totalSanityzedProspects += sanityzedProspects.length;
+        console.log(
+            `${processed}/${toProcess} processed prospects (${
+                Math.round((processed / toProcess) * 100 * 100) / 100
+            }%) ${totalSanityzedProspects} sanitized`,
+        );
     }
     console.log('Done');
     process.exit(1);
