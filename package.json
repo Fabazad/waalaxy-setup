@@ -27,7 +27,8 @@
         "mongoose": "5.10.4",
         "ts-jest": "^26.4.4",
         "ts-node": "^9.1.1",
-        "typescript": "^3.9.7"
+        "typescript": "^3.9.7",
+        "zod": "^3.8.2"
     },
     "devDependencies": {
         "@types/fs-extra": "^9.0.8",
