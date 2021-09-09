@@ -22,7 +22,7 @@ const findSameStats = <T extends Document>(model: Model<T>, filter: { action: Sc
 
 const findSameUserKPIs = <T extends Document>(model: Model<T>, filter: { user: string }) => model.collection.find(filter).toArray();
 
-const findStats = <T extends Document>(model: Model<T>) => model.collection.find({}).batchSize(BATCH_SIZE).stream();
+const findStats = <T extends Document>(model: Model<T>) => model.collection.find({}).batchSize(BATCH_SIZE).sort({ user: -1 }).stream();
 
 const deleteDuplicatedActionsById = (model: Model<any>, toDelete: Schema.Types.ObjectId[]) =>
     model
@@ -70,7 +70,7 @@ const handleStat = async (model: ReturnType<typeof Schemas[keyof typeof Schemas]
                     {},
                 );
                 delete toInsert._id;
-
+                processedCount += duplicated.length - 1;
                 const { deletedCount = 0 } = await deleteDuplicatedActionsById(
                     currentModel,
                     duplicated.map((d) => d._id),
@@ -79,6 +79,7 @@ const handleStat = async (model: ReturnType<typeof Schemas[keyof typeof Schemas]
                 await insertNewUserKPI(currentModel as Schemas.UserKpiModel, toInsert);
 
                 totalDeletedCount += deletedCount;
+                console.log(`${currentModel.modelName}: ${processedCount}/${count} (${(((processedCount / count) * 100 * 100) / 100).toFixed(2)}%)`);
             }
         }
     } else {
@@ -113,14 +114,15 @@ const handleStat = async (model: ReturnType<typeof Schemas[keyof typeof Schemas]
                         return acc;
                     }, []),
                 );
+                processedCount += duplicated.length - 1;
             }
 
             if (duplicatesToProcess.length > 1000) {
                 processedDuplicates.push(...duplicatesToProcess);
                 const { deletedCount = 0 } = await deleteDuplicatedActionsById(currentModel, duplicatesToProcess.splice(0, 1000));
                 totalDeletedCount += deletedCount;
+                console.log(`${currentModel.modelName}: ${processedCount}/${count} (${(((processedCount / count) * 100 * 100) / 100).toFixed(2)}%)`);
             }
-            console.log(`${currentModel.modelName}: ${processedCount}/${count} (${(((processedCount / count) * 100 * 100) / 100).toFixed(2)}%)`);
         }
 
         if (duplicatesToProcess.length) {
