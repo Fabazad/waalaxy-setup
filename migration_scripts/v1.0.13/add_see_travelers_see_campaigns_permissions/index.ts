@@ -25,7 +25,7 @@ const bulkUpdatePermissions = async (c: Connection, toUpdate: Array<{ user: stri
     );
 };
 
-async function addSeeTravelersSeeCampaignsPermissions() {
+export async function addSeeTravelersSeeCampaignsPermissions() {
     printStartScript('add see travelers see campaigns permissions');
 
     const bouncerDatabase = await loginToDatabase(process.env.BOUNCER_DATABASE!);
