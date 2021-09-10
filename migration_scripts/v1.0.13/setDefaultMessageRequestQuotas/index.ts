@@ -7,7 +7,7 @@ import { QuotaModel } from './schemas';
 
 dotEnv.config();
 
-const DEFAULT_QUOTAS = 100;
+const DEFAULT_QUOTAS = 80;
 
 const getUsers = (c: Connection) => QuotaModel(c).distinct('user');
 
