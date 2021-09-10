@@ -6,7 +6,7 @@ import { removeDuplicatedActionsInProspectHistory } from './removeDuplicatedACti
 import { removeDuplicatedActionStats } from './removeDuplicatedActionStats';
 import { setDefaultMessageRequestQuota } from './setDefaultMessageRequestQuotas';
 
-(async () => {
+const maintenanceRequired = async () => {
     console.time('Script for maintenance');
 
     await addSeeTravelersSeeCampaignsPermissions();
@@ -16,8 +16,9 @@ import { setDefaultMessageRequestQuota } from './setDefaultMessageRequestQuotas'
     await refactorDuplicatedProspects();
 
     console.timeEnd('Script for maintenance');
-    console.log('Maintenance can be removed');
+};
 
+const nonMaintenanceRequired = async () => {
     await removeDuplicatedActionsInProspectHistory();
     await removeDuplicatedActionStats();
-})();
+};

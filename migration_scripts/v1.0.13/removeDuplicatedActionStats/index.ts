@@ -1,11 +1,8 @@
-import dayjs from 'dayjs';
 import dotEnv from 'dotenv';
-import _ from 'lodash';
-import { Document, Model, modelNames, Schema } from 'mongoose';
-import { EventEmitter } from 'stream';
+import { Document, Model, Schema } from 'mongoose';
 import { disconnectFromDatabase, loginToDatabase } from '../../../mongoose';
-import { printProgress, printStartScript } from '../../scriptHelper';
-import { IConnectStat, IVisitStat, IMessageStat, IMessageRequestStat, IEmailStat, IFollowStat, IUserKpi } from './interfaces';
+import { printStartScript } from '../../scriptHelper';
+import { IUserKpi } from './interfaces';
 import * as Schemas from './schemas';
 
 dotEnv.config();

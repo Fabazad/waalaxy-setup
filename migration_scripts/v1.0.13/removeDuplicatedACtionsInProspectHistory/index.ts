@@ -1,7 +1,6 @@
 import dayjs from 'dayjs';
 import dotEnv from 'dotenv';
-import _ from 'lodash';
-import { Connection, Document, QueryCursor } from 'mongoose';
+import { Connection } from 'mongoose';
 import { EventEmitter } from 'stream';
 import { disconnectFromDatabase, loginToDatabase } from '../../../mongoose';
 import { printProgress, printStartScript } from '../../scriptHelper';
