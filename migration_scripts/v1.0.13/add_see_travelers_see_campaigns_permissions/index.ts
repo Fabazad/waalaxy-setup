@@ -49,8 +49,4 @@ export async function addSeeTravelersSeeCampaignsPermissions() {
         processed += permissionsBatch.length;
         printProgress(processed, count, startTime);
     }
-
-    process.exit(1);
 }
-
-addSeeTravelersSeeCampaignsPermissions();

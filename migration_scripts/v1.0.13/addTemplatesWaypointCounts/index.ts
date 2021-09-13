@@ -1,12 +1,10 @@
-import dotEnv from 'dotenv';
-import _ from 'lodash';
-import { Connection, Types } from 'mongoose';
-import { loginToDatabase } from '../../../mongoose';
-import { printProgress, printStartScript } from '../../scriptHelper';
-import { IWorldTemplate } from './interfaces';
 import { getMaxWaypointCounts, Path } from '@waapi/gaia';
-import { NewWorldTemplateModel, OldWorldTemplateModel } from './schemas';
 import { AllPossibleConditions } from '@waapi/zeus';
+import { Connection } from 'mongoose';
+import { loginToDatabase } from '../../../mongoose';
+import { printStartScript } from '../../scriptHelper';
+import { IWorldTemplate } from './interfaces';
+import { NewWorldTemplateModel, OldWorldTemplateModel } from './schemas';
 
 const getWorldTemplates = (c: Connection): Promise<Pick<IWorldTemplate, '_id' | 'paths' | 'startingPoint' | 'waypoints'>[]> =>
     OldWorldTemplateModel(c)
@@ -62,7 +60,4 @@ export const addTemplatesWaypointCounts = async () => {
     console.log(`Update ${modifiedCount} templates`);
 
     console.log('Exiting');
-    process.exit(1);
 };
-
-addTemplatesWaypointCounts();

@@ -139,8 +139,4 @@ export const refactorDuplicatedProspects = async () => {
     }
 
     console.log('exiting');
-
-    process.exit(1);
 };
-
-refactorDuplicatedProspects();

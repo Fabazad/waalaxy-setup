@@ -34,7 +34,4 @@ export const setDefaultMessageRequestQuota = async () => {
 
     await disconnectFromDatabase();
     console.log('Exiting');
-    process.exit(1);
 };
-
-setDefaultMessageRequestQuota();

@@ -103,7 +103,6 @@ export const removeDuplicatedActionsInProspectHistory = async () => {
 
         await disconnectFromDatabase();
         console.log('Exiting');
-        process.exit(1);
     });
 
     eventEmitter.on('error', async (err: Error) => {
@@ -112,8 +111,5 @@ export const removeDuplicatedActionsInProspectHistory = async () => {
 
         await disconnectFromDatabase();
         console.log('Exiting');
-        process.exit(1);
     });
 };
-
-removeDuplicatedActionsInProspectHistory();

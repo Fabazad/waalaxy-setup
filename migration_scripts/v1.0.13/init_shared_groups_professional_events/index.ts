@@ -6,8 +6,4 @@ export const initSharedGroupsAndProfessionalEvents = async () => {
 
     const goulagDatabase = await loginToDatabase(process.env.GOULAG_DATABASE!);
     await ProspectModel(goulagDatabase).updateMany({}, { $set: { sharedGroups: [], sharedProfessionalEvents: [] } });
-
-    process.exit(1);
 };
-
-initSharedGroupsAndProfessionalEvents();

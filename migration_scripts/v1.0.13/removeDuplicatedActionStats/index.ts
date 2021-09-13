@@ -154,8 +154,4 @@ export const removeDuplicatedActionStats = async () => {
     await disconnectFromDatabase();
 
     console.log('End');
-
-    process.exit();
 };
-
-removeDuplicatedActionStats();

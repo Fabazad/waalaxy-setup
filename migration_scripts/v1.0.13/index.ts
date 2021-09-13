@@ -22,3 +22,5 @@ const nonMaintenanceRequired = async () => {
     await removeDuplicatedActionsInProspectHistory();
     await removeDuplicatedActionStats();
 };
+
+maintenanceRequired();
