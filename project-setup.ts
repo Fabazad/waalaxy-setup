@@ -54,11 +54,11 @@ const repositories: Repositories = {
         folderName: 'hermes',
         basePath: 'back/services',
     },
-    'hermes-daemon': {
-        url: 'git@github.com:Waapi-Pro/hermes-daemon.git',
+    lilith: {
+        url: 'git@github.com:Waapi-Pro/lilith.git',
         developingBranch: 'develop',
         setupCommand: 'npm install',
-        folderName: 'hermes-daemon',
+        folderName: 'lilith',
         basePath: 'back/services',
     },
     janus: {
@@ -200,7 +200,7 @@ const repositories: Repositories = {
         setupCommand: 'npm install',
         folderName: 'otto-ui',
         basePath: 'front/services',
-    }
+    },
 };
 
 const execCommand = (command: string, options: ExecOptions): Promise<true> => {
