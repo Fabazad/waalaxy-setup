@@ -17,13 +17,13 @@ async function travelerHasBeenStop(monitoredEmail: IMonitoredEmail, travelerDAO:
     return !traveler || !["traveling", "pause"].includes(traveler.status.value);
 }
 
-async function resetRedisQuotaUpdate() {
-    printStartScript('Starting refactorDuplicatedProspects');
-    const professorDatabase = await loginToDatabase(process.env.PROFESSOR_DATABASE!);
+async function removeUselessMonitoredEmails() {
+    printStartScript('Starting removeUselessMonitoredEmails');
+    const profesorDatabase = await loginToDatabase(process.env.PROFESOR_DATABASE!);
     const hermesDatabase = await loginToDatabase(process.env.HERMES_DATABASE!);
 
     const monitoredEmailDAO = MonitoredEmailModel(hermesDatabase);
-    const travelerDAO = TravelerModel(professorDatabase);
+    const travelerDAO = TravelerModel(profesorDatabase);
 
     const monitoredEmailsTotal = await monitoredEmailDAO.count({});
     console.log(`Found ${monitoredEmailsTotal} users`);
@@ -36,13 +36,16 @@ async function resetRedisQuotaUpdate() {
             limit: BATCH_SIZE
         });
 
-        await Promise.all(monitoredEmails.map(async (monitoredEmail) => {
+        const monitoredEmailsToDelete = (await Promise.all(monitoredEmails.map(async (monitoredEmail) => {
             if (await travelerHasBeenStop(monitoredEmail, travelerDAO)) {
-                await monitoredEmailDAO.deleteOne({
-                    _id: monitoredEmail._id
-                });
+                return monitoredEmail._id;
             }
-        }));
+            return null;
+        }))).filter(id => id !== null);
+
+        await travelerDAO.deleteMany({
+            _id: { $in: monitoredEmailsToDelete }
+        });
 
         processedEmails += monitoredEmails.length;
         printProgress(processedEmails, monitoredEmailsTotal, startTime);
@@ -52,4 +55,4 @@ async function resetRedisQuotaUpdate() {
     process.exit(1);
 }
 
-resetRedisQuotaUpdate();
+removeUselessMonitoredEmails();
