@@ -4,11 +4,11 @@ const maintenanceRequired = async () => {
     console.log('Debut');
     console.time('Script for maintenance');
 
-    await changeMessageRepliedByConnectRepliedWhenNecessary();
-
     console.timeEnd('Script for maintenance');
 };
 
-// const nonMaintenanceRequired = async () => {};
+const nonMaintenanceRequired = async () => {
+    await changeMessageRepliedByConnectRepliedWhenNecessary();
+};
 
 maintenanceRequired();

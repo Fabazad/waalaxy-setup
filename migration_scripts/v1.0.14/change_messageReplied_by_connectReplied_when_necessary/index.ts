@@ -44,9 +44,10 @@ const bulkUpdateProspects = (
     updates: { updateOne: { filter: Record<string, unknown>; update: { $set: { history: Array<Record<string, unknown>> } } } }[],
 ) => ProspectModel(c).bulkWrite(updates);
 
-const sanitizeProspectHistory = (history: Prospect['history']): Prospect['history'] => {
+const sanitizeProspectHistory = (history: Prospect['history']): { data: Prospect['history']; hasBeenUpdated: boolean } => {
     let linkedinConnectFound = false;
-    return history.reduce<Prospect['history']>((acc, item) => {
+    let hasBeenUpdated = false;
+    const newHistory = history.reduce<Prospect['history']>((acc, item) => {
         if (item.name === 'linkedin_connect') {
             linkedinConnectFound = true;
         }
@@ -55,10 +56,12 @@ const sanitizeProspectHistory = (history: Prospect['history']): Prospect['histor
         }
         if (linkedinConnectFound && item.name === 'message_replied') {
             const newItem: HistoryItemMap['connect_replied'] = { name: 'connect_replied', params: item.params, executionDate: item.executionDate };
+            hasBeenUpdated = true;
             return [...acc, newItem];
         }
         return [...acc, item];
     }, []);
+    return { data: newHistory, hasBeenUpdated };
 };
 
 export const changeMessageRepliedByConnectRepliedWhenNecessary = async () => {
@@ -77,18 +80,21 @@ export const changeMessageRepliedByConnectRepliedWhenNecessary = async () => {
     const eventEmitter = getProspects(GoulagDatabase);
 
     eventEmitter.on('data', (prospect: Prospect) => {
-        prospectsUpdates.push({
-            updateOne: {
-                filter: {
-                    _id: prospect._id,
-                },
-                update: {
-                    $set: {
-                        history: sanitizeProspectHistory(prospect.history),
+        const newHistory = sanitizeProspectHistory(prospect.history);
+        if (newHistory.hasBeenUpdated) {
+            prospectsUpdates.push({
+                updateOne: {
+                    filter: {
+                        _id: prospect._id,
+                    },
+                    update: {
+                        $set: {
+                            history: newHistory.data,
+                        },
                     },
                 },
-            },
-        });
+            });
+        }
 
         if (prospectsUpdates.length >= 1000) {
             bulkUpdateProspects(GoulagDatabase, prospectsUpdates.splice(0, 1000)).then(({ modifiedCount = 0 }) => {
@@ -100,22 +106,26 @@ export const changeMessageRepliedByConnectRepliedWhenNecessary = async () => {
         printProgress(processedProspects, prospectsCount, startDate);
     });
 
-    eventEmitter.on('end', async () => {
-        if (prospectsUpdates.length) {
-            const { modifiedCount = 0 } = await bulkUpdateProspects(GoulagDatabase, prospectsUpdates.splice(0));
-            updatedProspects += modifiedCount;
-        }
-        console.log(`\n${updatedProspects} Updated prospects`);
+    return new Promise<void>((resolve, reject) => {
+        eventEmitter.on('end', async () => {
+            if (prospectsUpdates.length) {
+                const { modifiedCount = 0 } = await bulkUpdateProspects(GoulagDatabase, prospectsUpdates.splice(0));
+                updatedProspects += modifiedCount;
+            }
+            console.log(`\n${updatedProspects} Updated prospects`);
 
-        await disconnectFromDatabase();
-        console.log('Exiting');
-    });
+            await disconnectFromDatabase();
+            console.log('Exiting');
+            resolve();
+        });
 
-    eventEmitter.on('error', async (err: Error) => {
-        console.warn(err);
-        console.log(`\n${updatedProspects} Updated prospects`);
+        eventEmitter.on('error', async (err: Error) => {
+            console.warn(err);
+            console.log(`\n${updatedProspects} Updated prospects`);
 
-        await disconnectFromDatabase();
-        console.log('Exiting');
+            await disconnectFromDatabase();
+            console.log('Exiting');
+            reject(err);
+        });
     });
 };
