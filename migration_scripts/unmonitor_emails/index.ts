@@ -8,6 +8,8 @@ const BATCH_SIZE = 1000;
 
 async function travelerHasBeenStop(monitoredEmail: IMonitoredEmail, travelerDAO: ReturnType<typeof TravelerModel>): Promise<boolean> {
     const traveler = await travelerDAO.findOne({
+        user: monitoredEmail.user,
+        prospect: monitoredEmail.prospect,
         $or: [{
             "currentStop.params.monitoredEmailId": monitoredEmail._id.toString(),
         }, {
@@ -26,7 +28,7 @@ async function removeUselessMonitoredEmails() {
     const travelerDAO = TravelerModel(profesorDatabase);
 
     const monitoredEmailsTotal = await monitoredEmailDAO.count({});
-    console.log(`Found ${monitoredEmailsTotal} users`);
+    console.log(`Found ${monitoredEmailsTotal} monitored Emails`);
     const startTime = Date.now();
     let processedEmails = 0;
 
@@ -43,7 +45,7 @@ async function removeUselessMonitoredEmails() {
             return null;
         }))).filter(id => id !== null);
 
-        await travelerDAO.deleteMany({
+        await monitoredEmailDAO.deleteMany({
             _id: { $in: monitoredEmailsToDelete }
         });
 
