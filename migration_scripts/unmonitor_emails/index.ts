@@ -31,28 +31,29 @@ async function removeUselessMonitoredEmails() {
     console.log(`Found ${monitoredEmailsTotal} monitored Emails`);
     const startTime = Date.now();
     let processedEmails = 0;
-
+    const monitoredEmailsToDelete = [];
     while (processedEmails < monitoredEmailsTotal) {
         const monitoredEmails = await monitoredEmailDAO.find({}, {}, {
             skip: processedEmails,
             limit: BATCH_SIZE
         });
 
-        const monitoredEmailsToDelete = (await Promise.all(monitoredEmails.map(async (monitoredEmail) => {
+        monitoredEmailsToDelete.push(...(await Promise.all(monitoredEmails.map(async (monitoredEmail) => {
             if (await travelerHasBeenStop(monitoredEmail, travelerDAO)) {
                 return monitoredEmail._id;
             }
             return null;
-        }))).filter(id => id !== null);
-
-        await monitoredEmailDAO.deleteMany({
-            _id: { $in: monitoredEmailsToDelete }
-        });
+        }))).filter(id => id !== null));
 
         processedEmails += monitoredEmails.length;
         printProgress(processedEmails, monitoredEmailsTotal, startTime);
         await new Promise((r) => setTimeout(r, PAUSE_BETWEEN_BATCH));
     }
+
+
+    await monitoredEmailDAO.deleteMany({
+        _id: { $in: monitoredEmailsToDelete }
+    });
 
     process.exit(1);
 }
