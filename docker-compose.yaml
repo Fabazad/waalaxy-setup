@@ -1,4 +1,4 @@
-version: '3.8'
+version: '3.0'
 
 services:
     otto:
@@ -180,6 +180,8 @@ services:
             GOOGLE_CLIENT_ID: 141637350927-kfbhgp5p13tf9r5e9c2vlr7cid20m19u.apps.googleusercontent.com
             GOOGLE_CLIENT_SECRET: B29hgBJUFUOQF2tRsZtxeyPI
             MYSTIQUE_URL: http://localhost:3000
+            BOUNCER_URL: http://bouncer:5008/api
+            VOLTAIRE_URL: http://voltaire:5006
             NODE_ENV: E2E
             MONGODB_URI: mongodb://mongo:27017/Hermes
             MONGODB_URI_TEST: mongodb://mongo:27017/HermesTest
