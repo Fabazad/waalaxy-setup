@@ -42,10 +42,9 @@ const bulkUpdateProspects = (
     updates: { updateOne: { filter: Record<string, unknown>; update: { $set: { isActiveInCampaign: boolean } } } }[],
 ) => ProspectModel(c).bulkWrite(updates);
 
-const prospectIsActiveInCampaign = (prospect: Prospect): { isActiveInCampaign: boolean; toAdd: boolean } => {
+const prospectIsActiveInCampaign = (prospect: Prospect): { isActiveInCampaign: boolean } => {
     const { history, isActiveInCampaign } = prospect;
-    if (isActiveInCampaign) return { isActiveInCampaign, toAdd: false };
-    if (history.length === 0) return { isActiveInCampaign: false, toAdd: true };
+    if (history.length === 0) return { isActiveInCampaign: false };
     const isCampaignNameActive = ['campaign_start', 'campaign_play'];
     const isCampaignNameNotActive = ['campaign_error', 'campaign_exit', 'campaign_finish', 'campaign_pause'];
 
@@ -60,7 +59,7 @@ const prospectIsActiveInCampaign = (prospect: Prospect): { isActiveInCampaign: b
         index += 1;
     }
 
-    return { isActiveInCampaign: isTravelling, toAdd: true };
+    return { isActiveInCampaign: isTravelling };
 };
 
 export const addIsActiveInCampaign = async () => {
@@ -80,20 +79,18 @@ export const addIsActiveInCampaign = async () => {
 
     eventEmitter.on('data', (prospect: Prospect) => {
         const newIsActiveInCampaign = prospectIsActiveInCampaign(prospect);
-        if (newIsActiveInCampaign.toAdd) {
-            prospectsUpdates.push({
-                updateOne: {
-                    filter: {
-                        _id: prospect._id,
-                    },
-                    update: {
-                        $set: {
-                            isActiveInCampaign: newIsActiveInCampaign.isActiveInCampaign,
-                        },
+        prospectsUpdates.push({
+            updateOne: {
+                filter: {
+                    _id: prospect._id,
+                },
+                update: {
+                    $set: {
+                        isActiveInCampaign: newIsActiveInCampaign.isActiveInCampaign,
                     },
                 },
-            });
-        }
+            },
+        });
 
         if (prospectsUpdates.length >= 1000) {
             bulkUpdateProspects(GoulagDatabase, prospectsUpdates.splice(0, 1000)).then(({ modifiedCount = 0 }) => {
