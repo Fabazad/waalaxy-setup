@@ -4,7 +4,6 @@ import { changeMessageRepliedByConnectRepliedWhenNecessary } from './change_mess
 const maintenanceRequired = async () => {
     console.log('Debut');
     console.time('Script for maintenance');
-    await addIsActiveInCampaign();
 
     console.timeEnd('Script for maintenance');
 };
