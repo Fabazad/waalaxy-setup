@@ -10,25 +10,11 @@ dotEnv.config();
 
 const BATCH_SIZE = 1000;
 
-const countProspects = (c: Connection): Promise<number> =>
-    ProspectModel(c)
-        .count({
-            isActiveInCampaign: {
-                $exists: false,
-            },
-        })
-        .exec();
+const countProspects = (c: Connection): Promise<number> => ProspectModel(c).count({}).exec();
 
 const getProspects = (c: Connection): EventEmitter =>
     ProspectModel(c)
-        .collection.find(
-            {
-                isActiveInCampaign: {
-                    $exists: false,
-                },
-            },
-            { timeout: false },
-        )
+        .collection.find({}, { timeout: false })
         .project({
             _id: 1,
             history: 1,
@@ -43,23 +29,28 @@ const bulkUpdateProspects = (
 ) => ProspectModel(c).bulkWrite(updates);
 
 const prospectIsActiveInCampaign = (prospect: Prospect): { isActiveInCampaign: boolean } => {
-    const { history, isActiveInCampaign } = prospect;
-    if (history.length === 0) return { isActiveInCampaign: false };
+    const { history } = prospect;
     const isCampaignNameActive = ['campaign_start', 'campaign_play'];
-    const isCampaignNameNotActive = ['campaign_error', 'campaign_exit', 'campaign_finish', 'campaign_pause'];
+    const isCampaignNameNotActive = [
+        'campaign_error',
+        'campaign_exit',
+        'campaign_finish',
+        'campaign_pause',
+        'email_replied',
+        'message_replied',
+        'connect_replied',
+        'linkedin_message_request_replied',
+    ];
+    const reversedHistory = history.slice().reverse();
 
-    let isTravelling = false;
-    let notRunning = false;
-    let index = 0;
-    const historyReverse = history.reverse();
+    const isActiveInCampaign = reversedHistory.reduce<boolean | 'never_in_a_campaign'>((acc, curr) => {
+        if (acc !== 'never_in_a_campaign') return acc;
+        if (isCampaignNameActive.includes(curr.name)) return true;
+        if (isCampaignNameNotActive.includes(curr.name)) return false;
+        return acc;
+    }, 'never_in_a_campaign');
 
-    while (!isTravelling && !notRunning && index < historyReverse.length) {
-        if (isCampaignNameActive.includes(historyReverse[index].name)) isTravelling = true;
-        if (isCampaignNameNotActive.includes(historyReverse[index].name)) notRunning = true;
-        index += 1;
-    }
-
-    return { isActiveInCampaign: isTravelling };
+    return { isActiveInCampaign: isActiveInCampaign === 'never_in_a_campaign' ? false : isActiveInCampaign };
 };
 
 export const addIsActiveInCampaign = async () => {
