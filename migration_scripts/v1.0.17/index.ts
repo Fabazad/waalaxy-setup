@@ -5,12 +5,13 @@ const maintenanceRequired = async () => {
     console.log('Debut');
     console.time('Script for maintenance');
 
+    await addIsActiveInCampaign();
+
     console.timeEnd('Script for maintenance');
 };
 
 const nonMaintenanceRequired = async () => {
     await changeMessageRepliedByConnectRepliedWhenNecessary();
-    await addIsActiveInCampaign();
 };
 
 maintenanceRequired();

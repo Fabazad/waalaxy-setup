@@ -1,9 +1,9 @@
 import dotEnv from 'dotenv';
 import { Connection } from 'mongoose';
 import { EventEmitter } from 'stream';
+import { HistoryItemMap } from '../../../back/packages/goulag-client/src/types/prospects.types';
 import { disconnectFromDatabase, loginToDatabase } from '../../../mongoose';
 import { printProgress, printStartScript } from '../../scriptHelper';
-import { HistoryItemMap } from './../../../back/packages/goulag-client/src/types/prospects.types';
 import { Prospect } from './interfaces';
 import { ProspectModel } from './schemas';
 
