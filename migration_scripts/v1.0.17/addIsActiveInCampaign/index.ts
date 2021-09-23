@@ -10,11 +10,25 @@ dotEnv.config();
 
 const BATCH_SIZE = 1000;
 
-const countProspects = (c: Connection): Promise<number> => ProspectModel(c).count({}).exec();
+const countProspects = (c: Connection): Promise<number> =>
+    ProspectModel(c)
+        .count({
+            'history.0': {
+                $exists: true,
+            },
+        })
+        .exec();
 
 const getProspects = (c: Connection): EventEmitter =>
     ProspectModel(c)
-        .collection.find({}, { timeout: false })
+        .collection.find(
+            {
+                'history.0': {
+                    $exists: true,
+                },
+            },
+            { timeout: false },
+        )
         .project({
             _id: 1,
             history: 1,
