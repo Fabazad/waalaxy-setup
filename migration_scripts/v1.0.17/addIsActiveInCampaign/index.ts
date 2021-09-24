@@ -10,25 +10,11 @@ dotEnv.config();
 
 const BATCH_SIZE = 1000;
 
-const countProspects = (c: Connection): Promise<number> =>
-    ProspectModel(c)
-        .count({
-            'history.0': {
-                $exists: true,
-            },
-        })
-        .exec();
+const countProspects = (c: Connection): Promise<number> => ProspectModel(c).count({}).exec();
 
 const getProspects = (c: Connection): EventEmitter =>
     ProspectModel(c)
-        .collection.find(
-            {
-                'history.0': {
-                    $exists: true,
-                },
-            },
-            { timeout: false },
-        )
+        .collection.find({}, { timeout: false })
         .project({
             _id: 1,
             history: 1,
@@ -97,8 +83,8 @@ export const addIsActiveInCampaign = async () => {
             },
         });
 
-        if (prospectsUpdates.length >= 1000) {
-            bulkUpdateProspects(GoulagDatabase, prospectsUpdates.splice(0, 1000)).then(({ modifiedCount = 0 }) => {
+        if (prospectsUpdates.length >= BATCH_SIZE) {
+            bulkUpdateProspects(GoulagDatabase, prospectsUpdates.splice(0, BATCH_SIZE)).then(({ modifiedCount = 0 }) => {
                 updatedProspects += modifiedCount;
             });
         }

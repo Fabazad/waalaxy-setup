@@ -14,4 +14,4 @@ const nonMaintenanceRequired = async () => {
     await handleMessageRequestAndConnectReplied();
 };
 
-nonMaintenanceRequired();
+maintenanceRequired();

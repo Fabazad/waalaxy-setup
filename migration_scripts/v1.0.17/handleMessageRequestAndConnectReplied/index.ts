@@ -17,7 +17,7 @@ const countProspects = (c: Connection): Promise<number> =>
             'history.1': {
                 $exists: true,
             },
-            $and: [{ 'history.name': 'linkedin_connect' }, { 'history.name': 'message_replied' }],
+            'history.name': 'message_replied',
         })
         .exec();
 
@@ -28,7 +28,7 @@ const getProspects = (c: Connection): EventEmitter =>
                 'history.1': {
                     $exists: true,
                 },
-                $and: [{ 'history.name': 'linkedin_connect' }, { 'history.name': 'message_replied' }],
+                'history.name': 'message_replied',
             },
             { timeout: false },
         )
@@ -115,8 +115,8 @@ export const handleMessageRequestAndConnectReplied = async () => {
             });
         }
 
-        if (prospectsUpdates.length >= 1000) {
-            bulkUpdateProspects(GoulagDatabase, prospectsUpdates.splice(0, 1000)).then(({ modifiedCount = 0 }) => {
+        if (prospectsUpdates.length >= BATCH_SIZE) {
+            bulkUpdateProspects(GoulagDatabase, prospectsUpdates.splice(0, BATCH_SIZE)).then(({ modifiedCount = 0 }) => {
                 updatedProspects += modifiedCount;
             });
         }
