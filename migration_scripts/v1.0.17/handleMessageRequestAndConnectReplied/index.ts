@@ -45,27 +45,46 @@ const bulkUpdateProspects = (
 ) => ProspectModel(c).bulkWrite(updates);
 
 const sanitizeProspectHistory = (history: Prospect['history']): { data: Prospect['history']; hasBeenUpdated: boolean } => {
-    let linkedinConnectFound = false;
-    let hasBeenUpdated = false;
-    const newHistory = history.reduce<Prospect['history']>((acc, item) => {
-        if (item.name === 'linkedin_connect') {
-            linkedinConnectFound = true;
-        }
-        if (item.name === 'linkedin_message' || item.name === 'linkedin_message_request') {
-            linkedinConnectFound = false;
-        }
-        if (linkedinConnectFound && item.name === 'message_replied') {
-            const newItem: HistoryItemMap['connect_replied'] = { name: 'connect_replied', params: item.params, executionDate: item.executionDate };
-            hasBeenUpdated = true;
-            return [...acc, newItem];
-        }
-        return [...acc, item];
-    }, []);
+    const reversedHistory = [...history].reverse();
+
+    const { history: newReversedHistory, hasBeenUpdated } = reversedHistory.reduce<{
+        history: Prospect['history'];
+        hasBeenUpdated: boolean;
+        checking?: HistoryItemMap['message_replied'];
+    }>(
+        (acc, curr) => {
+            if (curr.name === 'message_replied') return { ...acc, checking: curr };
+            if (
+                acc.checking !== undefined &&
+                (curr.name === 'linkedin_message_request' || curr.name === 'linkedin_connect' || curr.name === 'linkedin_message')
+            ) {
+                if (curr.name === 'linkedin_message') return { ...acc, history: [...acc.history, curr], checking: undefined };
+
+                return {
+                    history: [
+                        ...acc.history,
+                        curr,
+                        {
+                            name: curr.name === 'linkedin_message_request' ? 'linkedin_message_request_replied' : 'connect_replied',
+                            params: acc.checking.params,
+                            executionDate: acc.checking.executionDate,
+                        },
+                    ],
+                    checking: undefined,
+                    hasBeenUpdated: true,
+                };
+            }
+            return { ...acc, history: [...acc.history, curr] };
+        },
+        { history: [], checking: undefined, hasBeenUpdated: false },
+    );
+
+    const newHistory = newReversedHistory.sort((a, b) => new Date(a.executionDate).getTime() - new Date(b.executionDate).getTime());
     return { data: newHistory, hasBeenUpdated };
 };
 
-export const changeMessageRepliedByConnectRepliedWhenNecessary = async () => {
-    printStartScript('Starting changeMessageRepliedByConnectRepliedWhenNecessary');
+export const handleMessageRequestAndConnectReplied = async () => {
+    printStartScript('Starting handleMessageRequestAndConnectReplied');
     const startDate = Date.now();
     const GoulagDatabase = await loginToDatabase(process.env.GOULAG_DATABASE!);
 

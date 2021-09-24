@@ -1,5 +1,5 @@
 import { addIsActiveInCampaign } from './addIsActiveInCampaign';
-import { changeMessageRepliedByConnectRepliedWhenNecessary } from './change_messageReplied_by_connectReplied_when_necessary';
+import { handleMessageRequestAndConnectReplied } from './handleMessageRequestAndConnectReplied';
 
 const maintenanceRequired = async () => {
     console.log('Debut');
@@ -11,7 +11,7 @@ const maintenanceRequired = async () => {
 };
 
 const nonMaintenanceRequired = async () => {
-    await changeMessageRepliedByConnectRepliedWhenNecessary();
+    await handleMessageRequestAndConnectReplied();
 };
 
-maintenanceRequired();
+nonMaintenanceRequired();

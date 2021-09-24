@@ -14,8 +14,9 @@ const trim = (text: string): string => text.trim();
 
 export const historyNamesRecord = {
     LINKEDIN_MESSAGE: 'linkedin_message',
-    LINKEDIN_CONNECT: 'linkedin_connect',
     LINKEDIN_MESSAGE_REQUEST: 'linkedin_message_request',
+    LINKEDIN_MESSAGE_REQUEST_REPLIED: 'linkedin_message_request_replied',
+    LINKEDIN_CONNECT: 'linkedin_connect',
     LINKEDIN_VISIT: 'linkedin_visit',
     LINKEDIN_FOLLOW: 'linkedin_follow',
     MESSAGE_SEEN: 'message_seen',
@@ -38,10 +39,19 @@ type HistoryItemBase = {
     executionDate: string;
 };
 
-type HistoryItemMap = {
+export type HistoryItemMap = {
     linkedin_message: HistoryItemBase & {
         action: string;
         name: 'linkedin_message';
+        params: {
+            contentReference: string;
+            messageContent: string;
+            messageId: string;
+        };
+    };
+    linkedin_message_request: HistoryItemBase & {
+        action: string;
+        name: 'linkedin_message_request';
         params: {
             contentReference: string;
             messageContent: string;
@@ -53,15 +63,6 @@ type HistoryItemMap = {
         name: 'linkedin_connect';
         params: {
             messageContent?: string;
-        };
-    };
-    linkedin_message_request: HistoryItemBase & {
-        action: string;
-        name: 'linkedin_message_request';
-        params: {
-            contentReference: string;
-            messageContent: string;
-            messageId: string;
         };
     };
     linkedin_visit: HistoryItemBase & {
@@ -103,6 +104,13 @@ type HistoryItemMap = {
         name: 'message_seen';
         params: {
             messageId: string;
+        };
+    };
+    linkedin_message_request_replied: HistoryItemBase & {
+        name: 'linkedin_message_request_replied';
+        params: {
+            messageId: string;
+            fromMessageId?: string;
         };
     };
     message_replied: HistoryItemBase & {
