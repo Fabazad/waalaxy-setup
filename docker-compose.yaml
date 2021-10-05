@@ -329,6 +329,10 @@ services:
             LIFELINE_TOKEN: token
             PROSPECTIN_URL: https://staging-prospectin-api.herokuapp.com
             PROSPECTIN_TOKEN: eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJfaWQiOiI1ZTgxZDc5MmQzYmZiMzAwMTdhOGQ0NjAiLCJsaW5rZWRpbklkIjoiODA0NzgyNzY1In0.PP_EByIAHezFb88FNIR41OQWEd26BNckGFIzItnbDec
+            SLACK_TOKEN: cce9bdbb82c6919c26c725f18812414fbb5894f872a20f042e938af246bd743e
+            SLACK_NEW_USER_COMPANY_CHANNEL: C02G81G2BBR
+            SEGMENT_TOKEN: jigqsMV74PyPgR6aOpFVhqhipzstL441
+            MIN_STAFF_COUNT: 50
         ports:
             - '5008:5008'
         volumes:
