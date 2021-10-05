@@ -47,6 +47,12 @@ const UserSchema = new Schema(
         },
         hasExtensionInstalled: { type: Boolean, required: false, default: false },
         dateExtensionUninstall: { type: Date, required: false },
+        company: {
+            name: { type: String, required: false },
+            linkedinUrl: { type: String, required: false },
+            website: { type: String, required: false },
+            staffCount: { type: Number, required: false },
+        },
     },
     { timestamps: true },
 );
@@ -54,40 +60,40 @@ const UserSchema = new Schema(
 export const UserModel = (c: Connection) => c.model<IUser & Document>('User', UserSchema);
 
 const UserStargateSchema = {
-  firstName: { type: String, required: true },
-  lastName: { type: String, required: true },
-  occupation: { type: String },
-  publicIdentifier: { type: String, required: true },
-  memberId: { type: String, required: true },
-  linkedinId: { type: String, required: true },
-  profilePicture: { type: String },
-  birthday: {
-    month: { type: Number },
-    day: { type: Number },
-  },
-  address: { type: String },
-  email: { type: String },
-  emailContact: { type: String },
-  phoneNumbers: {
-    type: [
-      {
-        type: { type: String, required: true },
-        number: { type: String, required: true },
-      },
-    ],
-  },
-  language: { type: String, required: true },
-  isTestUser: { type: Boolean },
-  origins: {
-    type: [
-      {
-        date: { type: Date, required: true },
-        content: { type: String, required: true },
-      },
-    ],
-    required: true,
-    _id: false,
-  },
+    firstName: { type: String, required: true },
+    lastName: { type: String, required: true },
+    occupation: { type: String },
+    publicIdentifier: { type: String, required: true },
+    memberId: { type: String, required: true },
+    linkedinId: { type: String, required: true },
+    profilePicture: { type: String },
+    birthday: {
+        month: { type: Number },
+        day: { type: Number },
+    },
+    address: { type: String },
+    email: { type: String },
+    emailContact: { type: String },
+    phoneNumbers: {
+        type: [
+            {
+                type: { type: String, required: true },
+                number: { type: String, required: true },
+            },
+        ],
+    },
+    language: { type: String, required: true },
+    isTestUser: { type: Boolean },
+    origins: {
+        type: [
+            {
+                date: { type: Date, required: true },
+                content: { type: String, required: true },
+            },
+        ],
+        required: true,
+        _id: false,
+    },
 };
 
 const UserPermissionSchema = new Schema(
@@ -134,6 +140,12 @@ const UserPermissionSchema = new Schema(
         subscriptionState: {
             isActive: { type: Boolean, required: false },
             stoppedAt: { type: Date, required: false },
+        },
+        company: {
+            name: { type: String, required: false },
+            linkedinUrl: { type: String, required: false },
+            website: { type: String, required: false },
+            staffCount: { type: Number, required: false },
         },
     },
     { timestamps: true },
