@@ -94,6 +94,12 @@ const UserStargateSchema = {
         required: true,
         _id: false,
     },
+    company: {
+        name: { type: String, required: false },
+        linkedinUrl: { type: String, required: false },
+        website: { type: String, required: false },
+        staffCount: { type: Number, required: false },
+    },
 };
 
 const UserPermissionSchema = new Schema(
@@ -140,12 +146,6 @@ const UserPermissionSchema = new Schema(
         subscriptionState: {
             isActive: { type: Boolean, required: false },
             stoppedAt: { type: Date, required: false },
-        },
-        company: {
-            name: { type: String, required: false },
-            linkedinUrl: { type: String, required: false },
-            website: { type: String, required: false },
-            staffCount: { type: Number, required: false },
         },
     },
     { timestamps: true },
