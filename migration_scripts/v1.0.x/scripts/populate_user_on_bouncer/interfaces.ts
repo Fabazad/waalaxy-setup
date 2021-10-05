@@ -26,6 +26,7 @@ export declare type IUser = {
         startDate: Date;
         endDate: Date;
     };
+    company?: { name?: string; linkedinUrl?: string; website?: string; staffCount?: number };
 } & {
     _id: mongoose.Schema.Types.ObjectId;
     createdAt?: string;
@@ -144,6 +145,7 @@ export type UserStargateData = {
     linkedinId: string;
     isTestUser: boolean;
     origins: Array<{ date: string; content: string }>;
+    company?: { name?: string; linkedinUrl?: string; website?: string; staffCount?: number };
 };
 
 export declare type IUserPermission<PermissionName extends string, PermissionGroupName extends string, PlanName extends string> = {
