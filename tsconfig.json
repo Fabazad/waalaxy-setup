@@ -10,6 +10,9 @@
         "resolveJsonModule": true,
         "allowJs": true,
     },
+    "ts-node": {
+        "transpileOnly": true
+    },
     "include": ["src/**/*", "project-setup.ts"],
     "exclude": ["node_modules"],
 }

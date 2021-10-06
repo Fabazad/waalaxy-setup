@@ -31,12 +31,12 @@ export const userToUserData = (user: IUser): UserStargateData => {
 
 const countUsers = (c: Connection) =>
     UserModel(c)
-        .countDocuments({ 'userData.memberId': { $exists: true } })
+        .countDocuments({ memberId: { $exists: true } })
         .exec();
 
 const findUserBatch = (c: Connection, skip: number): Promise<Array<IUser>> =>
     UserModel(c)
-        .find({ 'userData.memberId': { $exists: true } })
+        .find({ memberId: { $exists: true } })
         .skip(skip)
         .limit(BATCH_SIZE)
         .lean()
