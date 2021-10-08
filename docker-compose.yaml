@@ -396,6 +396,31 @@ services:
             - redis
             - mongo
             - otto
+    crypto:
+        build:
+            context: back/services/crypto
+            dockerfile: Dockerfile.dev
+            args:
+                - PORT=5011
+                - NPM_TOKEN=0bac5327-18e7-4495-82ba-c5e40b5712d5
+        environment:
+            PORT: 5011
+            REDIS_URL: redis://redis:6379
+            OTTO_URL: ws://otto:6666
+            OTTO_TOKEN: eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJhdXRob3IiOiJjcnlwdG8ifQ.D05zjXsDo_zrXwIwSbapzR3Ip1ywl9aGf1tWo5V2JJY
+            NODE_ENV: E2E
+            MONGODB_URI: mongodb://mongo:27017/Crypto
+            MONGODB_URI_TEST: mongodb://mongo:27017/CryptoTest
+            DOCUMENTATION_USER: admin
+            DOCUMENTATION_PASSWORD: admin
+        ports:
+            - '5011:5011'
+        volumes:
+            - ./back/services/crypto:/usr/src/crypto
+        depends_on:
+            - redis
+            - mongo
+            - otto
     mongo:
         image: mongo:latest
         volumes:

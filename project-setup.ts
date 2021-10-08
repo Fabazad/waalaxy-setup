@@ -201,6 +201,13 @@ const repositories: Repositories = {
         folderName: 'otto-ui',
         basePath: 'front/services',
     },
+    crypto: {
+        url: 'git@github.com:Waapi-Pro/crypto.git',
+        developingBranch: 'develop',
+        setupCommand: 'npm install',
+        folderName: 'crypto',
+        basePath: 'back/services',
+    },
 };
 
 const execCommand = (command: string, options: ExecOptions): Promise<true> => {
