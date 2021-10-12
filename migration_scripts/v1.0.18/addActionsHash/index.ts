@@ -1,4 +1,3 @@
-import dayjs from 'dayjs';
 import dotEnv from 'dotenv';
 import { Connection } from 'mongoose';
 import { EventEmitter } from 'stream';
