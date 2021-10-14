@@ -67,8 +67,8 @@ services:
             OTTO_URL: ws://otto:6666
             OTTO_TOKEN: eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJhdXRob3IiOiJwcm9mZXNvciJ9.vGARs6kAgyviA-rq7ldlP4Fqxsnpgq_o3Bsd04_T2bQ
             GOULAG_BASE_URL: http://goulag:5002/graphql
-            SHIVA_BASE_URL: http://shiva:5003
-            ENUTROF_BASE_URL: http://enutrof:5005
+            SHIVA_API_URL: http://shiva:5003/api
+            ENUTROF_API_URL: http://enutrof:5005/api
             HERMES_BASE_URL: http://hermes:5004
             BOUNCER_API_URL: http://bouncer:5008/api
             JANUS_URL: http://janus:5010
