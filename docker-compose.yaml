@@ -35,15 +35,15 @@ services:
         environment:
             PORT: 5002
             REDIS_URL: redis://redis:6379
-            OTTO_URL: ws://otto:6666
+            OTTO_BASE_URL: ws://otto:6666
             OTTO_TOKEN: eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJhdXRob3IiOiJnb3VsYWcifQ.9QX913j_OmzFyr7y6Z82gxAxkhusT_WGqOdAdaLmuFg
             NODE_ENV: E2E
             MONGODB_URI: mongodb://mongo:27017/Goulag
             MONGODB_URI_TEST: mongodb://mongo:27017/GoulagTest
             DOCUMENTATION_USER: admin
-            PROFESOR_URL: http://profesor:5001
+            PROFESOR_BASE_URL: http://profesor:5001
             DOCUMENTATION_PASSWORD: admin
-            BOUNCER_URL: http://bouncer:5008
+            BOUNCER_BASE_URL: http://bouncer:5008
             PROSPECTIN_URL: https://staging-prospectin-api.herokuapp.com
             PROSPECTIN_TOKEN: eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJfaWQiOiI1ZTgxZDc5MmQzYmZiMzAwMTdhOGQ0NjAiLCJsaW5rZWRpbklkIjoiODA0NzgyNzY1In0.PP_EByIAHezFb88FNIR41OQWEd26BNckGFIzItnbDec
         ports:
@@ -64,14 +64,14 @@ services:
         environment:
             PORT: 5001
             REDIS_URL: redis://redis:6379
-            OTTO_URL: ws://otto:6666
+            OTTO_BASE_URL: ws://otto:6666
             OTTO_TOKEN: eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJhdXRob3IiOiJwcm9mZXNvciJ9.vGARs6kAgyviA-rq7ldlP4Fqxsnpgq_o3Bsd04_T2bQ
-            GOULAG_BASE_URL: http://goulag:5002/graphql
-            SHIVA_API_URL: http://shiva:5003/api
-            ENUTROF_API_URL: http://enutrof:5005/api
+            GOULAG_URL: http://goulag:5002/graphql
+            SHIVA_BASE_URL: http://shiva:5003
+            ENUTROF_BASE_URL: http://enutrof:5005
             HERMES_BASE_URL: http://hermes:5004
-            BOUNCER_API_URL: http://bouncer:5008/api
-            JANUS_URL: http://janus:5010
+            BOUNCER_BASE_URL: http://bouncer:5008
+            JANUS_BASE_URL: http://janus:5010
             NODE_ENV: E2E
             MONGODB_URI: mongodb://mongo:27017/Profesor
             MONGODB_URI_TEST: mongodb://mongo:27017/ProfesorTest
@@ -98,18 +98,18 @@ services:
         environment:
             PORT: 5000
             REDIS_URL: redis://redis:6379
-            OTTO_URL: ws://otto:6666
+            OTTO_BASE_URL: ws://otto:6666
             OTTO_TOKEN: eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJhdXRob3IiOiJzdGFyZ2F0ZSJ9.y8VIfAsWL22nlpWMWKsv_9ebUCJ1xziQ1Qh6srjMTg8
-            GOULAG_URL: http://goulag:5002
-            PROFESOR_URL: http://profesor:5001
-            SHIVA_URL: http://shiva:5003
-            HERMES_URL: http://hermes:5004
-            ENUTROF_URL: http://enutrof:5005
-            VOLTAIRE_URL: http://voltaire:5006
-            ZILEAN_URL: http://zilean:5007
-            JANUS_URL: http://janus:5010
-            BOUNCER_URL: http://bouncer:5008
-            HAWKING_URL: http://hawking:5009
+            GOULAG_URL: http://goulag:5002/graphql
+            PROFESOR_BASE_URL: http://profesor:5001
+            SHIVA_BASE_URL: http://shiva:5003
+            HERMES_BASE_URL: http://hermes:5004
+            ENUTROF_BASE_URL: http://enutrof:5005
+            VOLTAIRE_BASE_URL: http://voltaire:5006
+            ZILEAN_BASE_URL: http://zilean:5007
+            JANUS_BASE_URL: http://janus:5010
+            BOUNCER_BASE_URL: http://bouncer:5008
+            HAWKING_BASE_URL: http://hawking:5009
             NODE_ENV: E2E
             MONGODB_URI: mongodb://mongo:27017/Stargate
             MONGODB_URI_TEST: mongodb://mongo:27017/StargateTest
@@ -121,7 +121,6 @@ services:
             TRADUORA_CLIENT_ID: 21e06f2a-7169-4d5d-928d-69ee0bbdf0f2
             TRADUORA_CLIENT_SECRET: eZx3AQr56PuHeF3tAlK3GjyB6Slqk8rx
             WAAPI_API_TOKEN: eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJleHBpcmF0aW9uRGF0ZSI6IjI5OTktMTItMzFUMjM6NTk6NTkuOTk5WiIsInNhbHQiOiJub25lIiwianRpIjoiMzhlMzM5ZGQtNTY0Zi00ZGIyLTk3OTAtMjllNmJkMTQ0ZTk5IiwiaWF0IjoxNjAyMDY2NDg4LCJleHAiOjE2MDIwNzAwODh9.D654ITgsba7ffui-T4_4Pa1CtkI7nEEJkWcMsIs75aw
-            BOUNCER_API_URL: http://bouncer:5008/api
             USER_PERMISSION_CACHE_EXPIRATION_IN_SECONDS: 0
         ports:
             - '5000:5000'
@@ -142,7 +141,7 @@ services:
         environment:
             PORT: 5003
             REDIS_URL: redis://redis:6379
-            OTTO_URL: ws://otto:6666
+            OTTO_BASE_URL: ws://otto:6666
             ZILEAN_BASE_URL: http://zilean:5007
             OTTO_TOKEN: eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJhdXRob3IiOiJzaGl2YSJ9.99Qhq6Ah7e_EGeiV9gr9haA1xYZ7xCf-lv_PyHNEV0g
             NODE_ENV: E2E
@@ -151,7 +150,7 @@ services:
             DOCUMENTATION_USER: admin
             DOCUMENTATION_PASSWORD: admin
             GOULAG_URL: http://goulag:5002/graphql
-            BOUNCER_API_URL: http://bouncer:5008
+            BOUNCER_BASE_URL: http://bouncer:5008
             LIFELINE_TOKEN: token
             REPORT_SLACK_HOOK_URL: https://hooks.slack.com/services/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
         ports:
@@ -172,16 +171,16 @@ services:
         environment:
             PORT: 5004
             REDIS_URL: redis://redis:6379
-            OTTO_URL: ws://otto:6666
+            OTTO_BASE_URL: ws://otto:6666
             ZILEAN_BASE_URL: http://zilean:5007
-            GOULAG_BASE_URL: http://goulag:5002/graphql
+            GOULAG_URL: http://goulag:5002/graphql
             OTTO_TOKEN: eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJhdXRob3IiOiJoZXJtZXMifQ.0wZozOqib6QLWm57mX38pYhjMYqiJSD1l77EZc4rtg0
             SECRET: kzenjf68zef/*zef-gergrege
             GOOGLE_CLIENT_ID: 141637350927-kfbhgp5p13tf9r5e9c2vlr7cid20m19u.apps.googleusercontent.com
             GOOGLE_CLIENT_SECRET: B29hgBJUFUOQF2tRsZtxeyPI
             MYSTIQUE_URL: http://localhost:3000
-            BOUNCER_URL: http://bouncer:5008/api
-            VOLTAIRE_URL: http://voltaire:5006
+            BOUNCER_BASE_URL: http://bouncer:5008
+            VOLTAIRE_BASE_URL: http://voltaire:5006
             NODE_ENV: E2E
             MONGODB_URI: mongodb://mongo:27017/Hermes
             MONGODB_URI_TEST: mongodb://mongo:27017/HermesTest
@@ -207,9 +206,9 @@ services:
             NODE_ENV: E2E
             REDIS_URL: redis://redis:6379
             PORT: 8887
-            HERMES_URL: http://hermes:8888
-            BOUNCER_URL: http://bouncer:5008
-            VOLTAIRE_URL: http://voltaire:5006
+            HERMES_BASE_URL: http://hermes:8888
+            BOUNCER_BASE_URL: http://bouncer:5008
+            VOLTAIRE_BASE_URL: http://voltaire:5006
             HERMES_TOKEN: eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.Imhlcm1lcy1kYWVtb24i.z6F4vTt-Xm080WPkEm1CW1kC7KHzE7VtcdVheHYlcYE
             HERMES_SECRET: kzenjf68zef/*zef-gergrege
             SEND_MAILS_INTERVAL: 1
@@ -238,7 +237,7 @@ services:
             MONGODB_URI_TEST: mongodb://mongo:27017/EnutrofTest
             DOCUMENTATION_USER: admin
             DOCUMENTATION_PASSWORD: admin
-            OTTO_URL: ws://otto:6666
+            OTTO_BASE_URL: ws://otto:6666
             OTTO_TOKEN: eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJhdXRob3IiOiJlbnV0cm9mIn0.jD0AkKiPFtigpe8VwUgX7qzWonbd2dfF3eQ5Nd1n3S8
             E2E_EXTERNAL_API: https://api.dropcontact.io
             DROP_CONTACT_API_KEY: WB8zYE5rGFQXxFXGYKK5TEVXcHG2gl
@@ -246,7 +245,7 @@ services:
             ENRICHMENT_CREATION_MAX_INTERVAL: 1000
             MAX_GET_BATCH_RESPONSE_ITERATIONS: 20
             GET_BATCH_RESPONSE_INTERVAL: 30000
-            BOUNCER_URL: http://bouncer:5008
+            BOUNCER_BASE_URL: http://bouncer:5008
         ports:
             - '5005:5005'
         volumes:
@@ -265,7 +264,7 @@ services:
         environment:
             PORT: 5006
             REDIS_URL: redis://redis:6379
-            OTTO_URL: ws://otto:6666
+            OTTO_BASE_URL: ws://otto:6666
             OTTO_TOKEN: eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJhdXRob3IiOiJ2b2x0YWlyZSJ9.VGRQLYaML3JazCMTpsiGjrK4dLgCGE2msJo8lll3RhM
             NODE_ENV: E2E
             MONGODB_URI: mongodb://mongo:27017/Voltaire
@@ -290,7 +289,7 @@ services:
         environment:
             PORT: 5007
             REDIS_URL: redis://redis:6379
-            OTTO_URL: ws://otto:6666
+            OTTO_BASE_URL: ws://otto:6666
             OTTO_TOKEN: eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJhdXRob3IiOiJ6aWxlYW4ifQ.RxLoMQRvjv5FTmHebvIQcHEWHAYsNJBWNFczZck1tgA
             NODE_ENV: E2E
             MONGODB_URI: mongodb://mongo:27017/Zilean
@@ -315,7 +314,7 @@ services:
         environment:
             PORT: 5008
             REDIS_URL: redis://redis:6379
-            OTTO_URL: ws://otto:6666
+            OTTO_BASE_URL: ws://otto:6666
             KAUPAONA_API_KEY: eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJuYW1lIjoid2FhbGF4eSIsImNyZWF0ZWREYXRlIjoxNjE4OTk4MDk5NDkwfQ.sddnQYapd2VBwXN6aOl2nPEGc8PwJt87xl_xbnfrmAo
             OTTO_TOKEN: eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJhdXRob3IiOiJib3VuY2VyIn0.rv0NYsD4M4rPfHvf96KiN0LuOriPyuJxqWVd1961xNc
             NODE_ENV: E2E
@@ -351,7 +350,7 @@ services:
         environment:
             PORT: 5009
             REDIS_URL: redis://redis:6379
-            OTTO_URL: ws://otto:6666
+            OTTO_BASE_URL: ws://otto:6666
             OTTO_TOKEN: eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJhdXRob3IiOiJoYXdraW5nIn0.Nr8Bv9eeUNs_aYQ-f0xNr-A9-MwetasfYrlycCg16tU
             NODE_ENV: E2E
             MONGODB_URI: mongodb://mongo:27017/Hawking
@@ -361,6 +360,7 @@ services:
             SLACK_TOKEN: cce9bdbb82c6919c26c725f18812414fbb5894f872a20f042e938af246bd743e
             SLACK_KPI_CHANNEL: C01T62UJJ94
             SEGMENT_TOKEN: jigqsMV74PyPgR6aOpFVhqhipzstL441
+            BOUNCER_BASE_URL: http://bouncer:5008
         ports:
             - '5009:5009'
         volumes:
@@ -379,13 +379,13 @@ services:
         environment:
             PORT: 5010
             REDIS_URL: redis://redis:6379
-            OTTO_URL: ws://otto:6666
+            OTTO_BASE_URL: ws://otto:6666
             OTTO_TOKEN: eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJhdXRob3IiOiJqYW51cyJ9.2uvHhq148S8zFaq7Ck-B7lFC8vNpldsUwP2d1Qe2wKY
             NODE_ENV: E2E
             MONGODB_URI: mongodb://mongo:27017/Janus
             MONGODB_URI_TEST: mongodb://mongo:27017/JanusTest
             DOCUMENTATION_USER: admin
-            BOUNCER_URL: http://bouncer:5008
+            BOUNCER_BASE_URL: http://bouncer:5008
             DOCUMENTATION_PASSWORD: admin
             WEB_CONCURRENCY: 2
         ports:
@@ -406,7 +406,7 @@ services:
         environment:
             PORT: 5011
             REDIS_URL: redis://redis:6379
-            OTTO_URL: ws://otto:6666
+            OTTO_BASE_URL: ws://otto:6666
             OTTO_TOKEN: eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJhdXRob3IiOiJjcnlwdG8ifQ.D05zjXsDo_zrXwIwSbapzR3Ip1ywl9aGf1tWo5V2JJY
             NODE_ENV: E2E
             MONGODB_URI: mongodb://mongo:27017/Crypto
