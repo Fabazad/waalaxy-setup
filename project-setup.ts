@@ -208,6 +208,13 @@ const repositories: Repositories = {
         folderName: 'crypto',
         basePath: 'back/services',
     },
+    pictochat: {
+        url: 'git@github.com:Waapi-Pro/pictochat.git',
+        developingBranch: 'develop',
+        setupCommand: 'npm install',
+        folderName: 'pictochat',
+        basePath: 'back/services',
+    }
 };
 
 const execCommand = (command: string, options: ExecOptions): Promise<true> => {
