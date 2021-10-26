@@ -153,5 +153,3 @@ export const retrieveActionStatsProspects = async () => {
 
     console.log('Exiting');
 };
-
-retrieveActionStatsProspects();
