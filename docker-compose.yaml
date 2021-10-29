@@ -173,7 +173,7 @@ services:
             REDIS_URL: redis://redis:6379
             OTTO_BASE_URL: ws://otto:6666
             ZILEAN_BASE_URL: http://zilean:5007
-            GOULAG_URL: http://goulag:5002/graphql
+            GOULAG_BASE_URL: http://goulag:5002/graphql
             OTTO_TOKEN: eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJhdXRob3IiOiJoZXJtZXMifQ.0wZozOqib6QLWm57mX38pYhjMYqiJSD1l77EZc4rtg0
             SECRET: kzenjf68zef/*zef-gergrege
             GOOGLE_CLIENT_ID: 141637350927-kfbhgp5p13tf9r5e9c2vlr7cid20m19u.apps.googleusercontent.com
@@ -196,32 +196,6 @@ services:
             - redis
             - mongo
             - otto
-    hermes-daemon:
-        build:
-            context: back/services/hermes-daemon
-            dockerfile: Dockerfile.dev
-            args:
-                - PORT=8887
-        environment:
-            NODE_ENV: E2E
-            REDIS_URL: redis://redis:6379
-            PORT: 8887
-            HERMES_BASE_URL: http://hermes:8888
-            BOUNCER_BASE_URL: http://bouncer:5008
-            VOLTAIRE_BASE_URL: http://voltaire:5006
-            HERMES_TOKEN: eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.Imhlcm1lcy1kYWVtb24i.z6F4vTt-Xm080WPkEm1CW1kC7KHzE7VtcdVheHYlcYE
-            HERMES_SECRET: kzenjf68zef/*zef-gergrege
-            SEND_MAILS_INTERVAL: 1
-            FETCH_MAILS_INTERVAL: 30
-        ports:
-            - '8887:8887'
-        volumes:
-            - ./back/services/hermes-daemon:/usr/src/hermes-daemon
-        depends_on:
-            - redis
-            - mongo
-            - bouncer
-            - hermes
     enutrof:
         build:
             context: back/services/enutrof
