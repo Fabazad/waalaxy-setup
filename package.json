@@ -34,7 +34,6 @@
     },
     "devDependencies": {
         "@types/fs-extra": "^9.0.8",
-        "@types/mongoose": "5.10.1",
         "@types/node": "^14.14.31",
         "@waapi/gaia": "^1.0.9",
         "@waapi/hermes-client": "^1.0.12",
