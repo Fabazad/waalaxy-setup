@@ -9,7 +9,10 @@ dotEnv.config();
 
 const BATCH_SIZE = 1000;
 
-const findSameStats = <T extends Document>(model: Model<T>, filter: { action: Schema.Types.ObjectId; status: string; user: string }) =>
+const findSameStats = <T extends Document>(
+    model: Model<T>,
+    filter: { emailId?: string; action?: Schema.Types.ObjectId; status: string; user: string },
+) =>
     model.collection
         .find(filter)
         .project({
@@ -93,15 +96,17 @@ const handleStat = async (model: ReturnType<typeof Schemas[keyof typeof Schemas]
 
             processedDuplicates.push(document._id);
 
-            const duplicated = await findSameStats(currentModel, {
-                action: document.action,
-                status: document.status,
-                user: document.user,
-            });
+            const duplicatedEmailId = document.emailId
+                ? await findSameStats(currentModel, {
+                      status: document.status,
+                      user: document.user,
+                      emailId: document.emailId,
+                  })
+                : [];
 
-            if (duplicated.length > 1) {
+            if (duplicatedEmailId.length > 1) {
                 duplicatesToProcess.push(
-                    ...duplicated.reduce<Schema.Types.ObjectId[]>((acc, val) => {
+                    ...duplicatedEmailId.reduce<Schema.Types.ObjectId[]>((acc, val) => {
                         if (
                             val._id.toString() !== document._id.toString() &&
                             !duplicatesToProcess.find((d) => d.toString() === document._id.toString())
@@ -111,7 +116,30 @@ const handleStat = async (model: ReturnType<typeof Schemas[keyof typeof Schemas]
                         return acc;
                     }, []),
                 );
-                processedCount += duplicated.length - 1;
+                processedCount += duplicatedEmailId.length - 1;
+            }
+
+            const duplicatedAction = document.action
+                ? await findSameStats(currentModel, {
+                      status: document.status,
+                      user: document.user,
+                      action: document.action,
+                  })
+                : [];
+
+            if (duplicatedAction.length > 1) {
+                duplicatesToProcess.push(
+                    ...duplicatedAction.reduce<Schema.Types.ObjectId[]>((acc, val) => {
+                        if (
+                            val._id.toString() !== document._id.toString() &&
+                            !duplicatesToProcess.find((d) => d.toString() === document._id.toString())
+                        ) {
+                            acc.push(val._id);
+                        }
+                        return acc;
+                    }, []),
+                );
+                processedCount += duplicatedAction.length - 1;
             }
 
             if (duplicatesToProcess.length > 1000) {
@@ -155,3 +183,5 @@ export const removeDuplicatedActionStats = async () => {
 
     console.log('End');
 };
+
+removeDuplicatedActionStats();

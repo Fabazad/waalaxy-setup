@@ -1,6 +1,6 @@
 import { Connection, Document, Model, Schema } from 'mongoose';
 import mongooseLeanGetters from 'mongoose-lean-getters';
-import { IUserKpi, IConnectStat, IEmailStat, IFollowStat, IMessageRequestStat, IMessageStat, IVisitStat } from './interfaces';
+import { IConnectStat, IEmailStat, IFollowStat, IMessageRequestStat, IMessageStat, IUserKpi, IVisitStat } from './interfaces';
 
 export type ConnectStatModel = Model<IConnectStat & Document>;
 
@@ -45,7 +45,8 @@ const createEmailStatModel = (c: Connection): EmailStatModel => {
     const EmailStatSchema = new Schema(
         {
             user: { type: String, required: true },
-            action: { type: String, required: true },
+            emailId: { type: String, required: true },
+            action: { type: String, required: false },
             date: { type: Date, required: true },
             campaign: { type: String, required: true },
             status: { type: String, enum: ['sent'], required: true },
@@ -56,7 +57,7 @@ const createEmailStatModel = (c: Connection): EmailStatModel => {
         .index(
             {
                 user: 1,
-                action: 1,
+                emailId: 1,
                 status: 1,
             },
             {

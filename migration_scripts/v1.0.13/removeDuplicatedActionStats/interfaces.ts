@@ -4,7 +4,7 @@ export declare type IConnectStat = { user: string; action: string; date: string;
     updatedAt?: string;
 };
 
-export declare type IEmailStat = { user: string; action: string; date: string; campaign: string; status: 'sent' } & {
+export declare type IEmailStat = { user: string; emailId: string; action?: string; date: string; campaign: string; status: 'sent' } & {
     _id: string;
     createdAt?: string;
     updatedAt?: string;
