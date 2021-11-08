@@ -25,7 +25,7 @@ const isLnOrMailAction = (
 ): item is Omit<QueuedAction, 'action'> & { action: LinkedInAction | (EmailAction & { type: 'email' }) } =>
     acceptedActionTypes.includes(item.action.type);
 
-const BATCH_SIZE = 100;
+const BATCH_SIZE = 1000;
 
 const countTravelers = (c: Connection) =>
     TravelerModel(c)
@@ -111,13 +111,16 @@ export const retrieveActionStatsProspects = async () => {
     const ProfesorDatabase = await loginToDatabase(process.env.PROFESOR_DATABASE!);
     const HawkingDatabase = await loginToDatabase(process.env.HAWKING_DATABASE!);
 
-    const travelersCount = await countTravelers(ProfesorDatabase);
-    console.log(`Found ${travelersCount} Travelers with at least`);
+    // const travelersCount = await countTravelers(ProfesorDatabase);
+    // console.log(`Found ${travelersCount} Travelers with at least`);
 
+    let hasMore = true;
     let processedTravelers = 0;
 
-    while (processedTravelers < travelersCount) {
-        const updates = getActionsUpdates(await getTravelersBatch(ProfesorDatabase, processedTravelers, BATCH_SIZE));
+    while (hasMore) {
+        const batch = await getTravelersBatch(ProfesorDatabase, processedTravelers, BATCH_SIZE);
+        hasMore = !!batch.length;
+        const updates = getActionsUpdates(batch);
 
         await Promise.all(
             Object.entries(updates).map(async ([type, updates]) => {
@@ -146,10 +149,12 @@ export const retrieveActionStatsProspects = async () => {
 
         processedTravelers += BATCH_SIZE;
 
-        printProgress(processedTravelers, travelersCount, startDate);
+        printProgress(processedTravelers, 20000000, startDate);
     }
 
     await disconnectFromDatabase();
 
     console.log('Exiting');
 };
+
+retrieveActionStatsProspects();

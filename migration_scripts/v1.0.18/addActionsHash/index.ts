@@ -101,3 +101,5 @@ export const addActionsHash = async () => {
         });
     });
 };
+
+addActionsHash();
