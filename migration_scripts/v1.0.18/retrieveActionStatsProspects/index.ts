@@ -1,6 +1,7 @@
 import { ACTION_TYPES as EMAIL_ACTION_TYPES, IAction as EmailAction } from '@waapi/hermes-client';
 import { ActionType, ACTION_TYPES as LN_ACTION_TYPES, IAction as LinkedInAction } from '@waapi/shiva-client';
 import dotEnv from 'dotenv';
+import EventEmitter from 'events';
 import { Connection, Document, Model } from 'mongoose';
 import { disconnectFromDatabase, loginToDatabase } from '../../../mongoose';
 import { printStartScript, printProgress } from '../../scriptHelper';
@@ -60,6 +61,26 @@ const getTravelersBatch = (c: Connection, start: number, limit: number): Promise
         .lean()
         .exec();
 
+const getTravelersStream = (c: Connection, start: number): EventEmitter =>
+    TravelerModel(c)
+        .collection.find({
+            'history.type': 'queued_action',
+            'history.action.type': {
+                $in: [...Object.values(LN_ACTION_TYPES), ...Object.values(EMAIL_ACTION_TYPES)],
+            },
+            prospect: {
+                $exists: true,
+            },
+        })
+        .project({
+            _id: 1,
+            prospect: true,
+            history: true,
+        })
+        .skip(start)
+        .batchSize(BATCH_SIZE)
+        .stream();
+
 const bulkUpdateStat = (
     model: Model<Document, {}>,
     updates: { updateMany: { filter: { action: string }; update: { $set: { prospect: string } } } }[],
@@ -105,6 +126,43 @@ const getActionsUpdates = (travelers: Pick<ITraveler, '_id' | 'history' | 'prosp
         },
     );
 
+const getActionUpdate = (traveler: Pick<ITraveler, '_id' | 'history' | 'prospect'>) => {
+    const updates = {
+        followLinkedin: [],
+        messageLinkedin: [],
+        visitLinkedin: [],
+        connectLinkedin: [],
+        messageRequestLinkedin: [],
+        email: [],
+    };
+    const onlyActionHistory = traveler.history.filter(isQueuedAction).filter(isLnOrMailAction);
+
+    let alreadyAddedIds: string[] = [];
+
+    onlyActionHistory.forEach(({ action: { type, _id } }) => {
+        if (!alreadyAddedIds.includes(_id)) {
+            updates[type] = [
+                ...updates[type],
+                {
+                    updateMany: {
+                        filter: {
+                            action: _id,
+                        },
+                        update: {
+                            $set: {
+                                prospect: traveler.prospect,
+                            },
+                        },
+                    },
+                },
+            ];
+            alreadyAddedIds.push(_id);
+        }
+    });
+
+    return updates;
+};
+
 export const retrieveActionStatsProspects = async () => {
     printStartScript('Starting retrieveActionStatsProspects');
     const startDate = Date.now();
@@ -114,47 +172,126 @@ export const retrieveActionStatsProspects = async () => {
     // const travelersCount = await countTravelers(ProfesorDatabase);
     // console.log(`Found ${travelersCount} Travelers with at least`);
 
-    let hasMore = true;
-    let processedTravelers = 0;
+    // let hasMore = true;
+    let processedTravelers = 1068000;
+    let statsUpdates = {
+        followLinkedin: [],
+        messageLinkedin: [],
+        visitLinkedin: [],
+        connectLinkedin: [],
+        messageRequestLinkedin: [],
+        email: [],
+    };
 
-    while (hasMore) {
-        const batch = await getTravelersBatch(ProfesorDatabase, processedTravelers, BATCH_SIZE);
-        hasMore = !!batch.length;
-        const updates = getActionsUpdates(batch);
+    const eventEmitter = await getTravelersStream(ProfesorDatabase, processedTravelers);
 
-        await Promise.all(
-            Object.entries(updates).map(async ([type, updates]) => {
-                // @ts-ignore
-                const typedType: ActionType | 'email' = type;
-                if (updates.length) {
-                    switch (typedType) {
+    eventEmitter.on('data', (traveler: Pick<ITraveler, '_id' | 'history' | 'prospect'>) => {
+        Object.entries(getActionUpdate(traveler)).forEach(([key, updates]) => {
+            statsUpdates[key].push(...updates);
+        });
+
+        Promise.all(
+            Object.entries(statsUpdates).map(async ([type, updates]) => {
+                if (updates.length >= 1000) {
+                    switch (type) {
                         case 'email':
-                            return await bulkUpdateStat(EmailStatModel(HawkingDatabase), updates);
+                            return await bulkUpdateStat(EmailStatModel(HawkingDatabase), statsUpdates[type].splice(0, 1000));
                         case 'visitLinkedin':
-                            return await bulkUpdateStat(VisitStatModel(HawkingDatabase), updates);
+                            return await bulkUpdateStat(VisitStatModel(HawkingDatabase), statsUpdates[type].splice(0, 1000));
                         case 'messageLinkedin':
-                            return await bulkUpdateStat(MessageStatModel(HawkingDatabase), updates);
+                            return await bulkUpdateStat(MessageStatModel(HawkingDatabase), statsUpdates[type].splice(0, 1000));
                         case 'messageRequestLinkedin':
-                            return await bulkUpdateStat(MessageRequestStatModel(HawkingDatabase), updates);
+                            return await bulkUpdateStat(MessageRequestStatModel(HawkingDatabase), statsUpdates[type].splice(0, 1000));
                         case 'followLinkedin':
-                            return await bulkUpdateStat(FollowStatModel(HawkingDatabase), updates);
+                            return await bulkUpdateStat(FollowStatModel(HawkingDatabase), statsUpdates[type].splice(0, 1000));
                         case 'connectLinkedin':
-                            return await bulkUpdateStat(ConnectStatModel(HawkingDatabase), updates);
+                            return await bulkUpdateStat(ConnectStatModel(HawkingDatabase), statsUpdates[type].splice(0, 1000));
                         default:
-                            throw new TypeError(`Unrecognized: ${typedType}`);
+                            throw new TypeError(`Unrecognized: ${type}`);
                     }
                 }
             }),
         );
-
-        processedTravelers += BATCH_SIZE;
+        processedTravelers += 1;
 
         printProgress(processedTravelers, 20000000, startDate);
-    }
+    });
 
-    await disconnectFromDatabase();
+    // while (hasMore) {
+    //     const batch = await getTravelersBatch(ProfesorDatabase, processedTravelers, BATCH_SIZE);
+    //     hasMore = !!batch.length;
+    //     const updates = getActionsUpdates(batch);
 
-    console.log('Exiting');
+    //     await Promise.all(
+    //         Object.entries(updates).map(async ([type, updates]) => {
+    //             // @ts-ignore
+    //             const typedType: ActionType | 'email' = type;
+    //             if (updates.length) {
+    //                 switch (typedType) {
+    //                     case 'email':
+    //                         return await bulkUpdateStat(EmailStatModel(HawkingDatabase), updates);
+    //                     case 'visitLinkedin':
+    //                         return await bulkUpdateStat(VisitStatModel(HawkingDatabase), updates);
+    //                     case 'messageLinkedin':
+    //                         return await bulkUpdateStat(MessageStatModel(HawkingDatabase), updates);
+    //                     case 'messageRequestLinkedin':
+    //                         return await bulkUpdateStat(MessageRequestStatModel(HawkingDatabase), updates);
+    //                     case 'followLinkedin':
+    //                         return await bulkUpdateStat(FollowStatModel(HawkingDatabase), updates);
+    //                     case 'connectLinkedin':
+    //                         return await bulkUpdateStat(ConnectStatModel(HawkingDatabase), updates);
+    //                     default:
+    //                         throw new TypeError(`Unrecognized: ${typedType}`);
+    //                 }
+    //             }
+    //         }),
+    //     );
+
+    //     processedTravelers += BATCH_SIZE;
+
+    //     printProgress(processedTravelers, 20000000, startDate);
+    // }
+
+    return await new Promise<'OK'>((resolve, reject) => {
+        eventEmitter.on('end', async () => {
+            await Promise.all(
+                Object.entries(statsUpdates).map(async ([type, updates]) => {
+                    if (updates.length) {
+                        switch (type) {
+                            case 'email':
+                                return await bulkUpdateStat(EmailStatModel(HawkingDatabase), statsUpdates[type].splice(0));
+                            case 'visitLinkedin':
+                                return await bulkUpdateStat(VisitStatModel(HawkingDatabase), statsUpdates[type].splice(0));
+                            case 'messageLinkedin':
+                                return await bulkUpdateStat(MessageStatModel(HawkingDatabase), statsUpdates[type].splice(0));
+                            case 'messageRequestLinkedin':
+                                return await bulkUpdateStat(MessageRequestStatModel(HawkingDatabase), statsUpdates[type].splice(0));
+                            case 'followLinkedin':
+                                return await bulkUpdateStat(FollowStatModel(HawkingDatabase), statsUpdates[type].splice(0));
+                            case 'connectLinkedin':
+                                return await bulkUpdateStat(ConnectStatModel(HawkingDatabase), statsUpdates[type].splice(0));
+                            default:
+                                throw new TypeError(`Unrecognized: ${type}`);
+                        }
+                    }
+                }),
+            );
+            console.log(`\n${processedTravelers} Processed travelers`);
+
+            await disconnectFromDatabase();
+            console.log('Exiting');
+            resolve('OK');
+        });
+
+        eventEmitter.on('error', async (err: Error) => {
+            console.warn(err);
+            console.log(`\n${processedTravelers} Processed travelers`);
+
+            await disconnectFromDatabase();
+            console.log('Exiting');
+            reject(err);
+        });
+    });
 };
 
 retrieveActionStatsProspects();
