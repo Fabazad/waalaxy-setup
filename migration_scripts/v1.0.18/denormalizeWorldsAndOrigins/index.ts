@@ -1,7 +1,7 @@
 import dotEnv from 'dotenv';
 import { disconnectFromDatabase, loginToDatabase } from '../../../mongoose';
 import { printProgress, printStartScript } from '../../scriptHelper';
-import { CAMPAIGNS_UPDATE_BATCH_SIZE, ORIGINS_BATCH_SIZE, TRAVELERS_UPDATE_BATCH_SIZE, WORLDS_BATCH_SIZE } from './constants';
+import { ORIGINS_BATCH_SIZE, WORLDS_BATCH_SIZE } from './constants';
 import { DenormalizeFunctionParams } from './interfaces';
 import {
     buildCampaignOriginsUpdate,
@@ -27,47 +27,26 @@ dotEnv.config();
 
 const denormalize = async <Data extends World | Origin>({
     connection,
-    eventEmitter,
+    count,
+    alreadyProcessed = 0,
+    getBatch,
     buildCampaignUpdate,
     buildTravelerUpdate,
     onProcess,
 }: DenormalizeFunctionParams<Data>) => {
-    const travelersUpdates: BulkUpdate<Traveler | OldTraveler> = [];
-    const campaignsUpdates: BulkUpdate<Campaign | OldCampaign> = [];
+    let processed = alreadyProcessed;
 
-    let processed = 0;
+    while (processed < count) {
+        const batch = await getBatch(processed);
 
-    eventEmitter.on('data', (data: Data) => {
-        travelersUpdates.push(...buildTravelerUpdate(data));
-        campaignsUpdates.push(...buildCampaignUpdate(data));
+        const travelersUpdates: BulkUpdate<Traveler | OldTraveler> = batch.map(buildTravelerUpdate).flat();
+        const campaignsUpdates: BulkUpdate<Campaign | OldCampaign> = batch.map(buildCampaignUpdate).flat();
 
-        if (travelersUpdates.length >= TRAVELERS_UPDATE_BATCH_SIZE) {
-            bulkUpdateTravelers(connection, travelersUpdates.splice(0, TRAVELERS_UPDATE_BATCH_SIZE));
-        }
+        await Promise.all([bulkUpdateTravelers(connection, travelersUpdates), bulkUpdateCampaigns(connection, campaignsUpdates)]);
 
-        if (campaignsUpdates.length >= CAMPAIGNS_UPDATE_BATCH_SIZE) {
-            bulkUpdateCampaigns(connection, campaignsUpdates.splice(0, CAMPAIGNS_UPDATE_BATCH_SIZE));
-        }
-
-        processed += 1;
+        processed += batch.length;
         onProcess(processed);
-    });
-
-    return new Promise<void>((resolve, reject) => {
-        eventEmitter.on('end', async () => {
-            if (travelersUpdates.length) {
-                await bulkUpdateTravelers(connection, travelersUpdates.splice(0));
-            }
-
-            if (campaignsUpdates.length) {
-                await bulkUpdateCampaigns(connection, campaignsUpdates.splice(0));
-            }
-
-            resolve();
-        });
-
-        eventEmitter.on('error', reject);
-    });
+    }
 };
 
 export const denormalizeWorldsAndOrigins = async () => {
@@ -83,29 +62,35 @@ export const denormalizeWorldsAndOrigins = async () => {
     await sleep(3000);
 
     try {
-        const worldsStartDate = Date.now();
-        await denormalize<World>({
-            connection: ProfesorDatabase,
-            eventEmitter: getWorlds(ProfesorDatabase, WORLDS_BATCH_SIZE),
-            buildTravelerUpdate: (world) => [buildTravelerWorldUpdate(world), buildTravelerTravelStatesWorldUpdate(world)],
-            buildCampaignUpdate: (world) => [buildCampaignWorldUpdate(world), ...buildCampaignSubWorldsUpdate(world)],
-            onProcess: (processed) => printProgress(processed, worldsCount, worldsStartDate),
-        });
-
         const originsStartDate = Date.now();
-        await denormalize<Origin>({
-            connection: ProfesorDatabase,
-            eventEmitter: getOrigins(ProfesorDatabase, ORIGINS_BATCH_SIZE),
-            buildTravelerUpdate: (origin) => [buildTravelerOriginUpdate(origin)],
-            buildCampaignUpdate: (origin) => [buildCampaignOriginsUpdate(origin)],
-            onProcess: (processed) => printProgress(processed, originsCount, originsStartDate),
-        });
+        const worldsStartDate = Date.now();
+
+        await Promise.all([
+            denormalize<Origin>({
+                connection: ProfesorDatabase,
+                getBatch: (processed) => getOrigins(ProfesorDatabase, processed, ORIGINS_BATCH_SIZE),
+                count: originsCount,
+                buildTravelerUpdate: (origin) => [buildTravelerOriginUpdate(origin)],
+                buildCampaignUpdate: (origin) => [buildCampaignOriginsUpdate(origin)],
+                onProcess: (processed) => printProgress(processed, originsCount, originsStartDate),
+            }),
+            denormalize<World>({
+                connection: ProfesorDatabase,
+                getBatch: (processed) => getWorlds(ProfesorDatabase, processed, WORLDS_BATCH_SIZE),
+                count: worldsCount,
+                buildTravelerUpdate: (world) => [buildTravelerWorldUpdate(world), buildTravelerTravelStatesWorldUpdate(world)],
+                buildCampaignUpdate: (world) => [buildCampaignWorldUpdate(world), ...buildCampaignSubWorldsUpdate(world)],
+                onProcess: (processed) => printProgress(processed, worldsCount, worldsStartDate),
+            }),
+        ]);
     } catch (err) {
         console.log(err);
     }
 
-    const notUpdatedTravelers = await countNotUpdatedTravelers(ProfesorDatabase);
-    const notUpdatedCampaigns = await countNotUpdatedCampaigns(ProfesorDatabase);
+    const [notUpdatedTravelers, notUpdatedCampaigns] = await Promise.all([
+        countNotUpdatedTravelers(ProfesorDatabase),
+        countNotUpdatedCampaigns(ProfesorDatabase),
+    ]);
     if (notUpdatedCampaigns > 0 || notUpdatedTravelers > 0)
         console.log(`\nNot updated: ${notUpdatedCampaigns} campaigns and ${notUpdatedTravelers} travelers`);
 

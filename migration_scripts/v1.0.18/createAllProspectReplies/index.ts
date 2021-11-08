@@ -252,5 +252,3 @@ export const createAllProspectReplies = async () => {
 
     console.log('Exiting');
 };
-
-createAllProspectReplies();

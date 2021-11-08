@@ -1,19 +1,19 @@
 // eslint-disable-next-line import/no-extraneous-dependencies
 import { BulkWriteOperation } from 'mongodb';
 import { Connection, FilterQuery, Types } from 'mongoose';
-import EventEmitter from 'stream';
 import { SUBWORLD_TYPES } from './constants';
 import { Campaign, OldCampaign, OldTraveler, Origin, Traveler, World } from './interfaces';
 import { CampaignModel, OriginModel, TravelerModel, WorldModel } from './schemas';
 
 const worldsConditions: FilterQuery<World> = {};
-export const getWorlds = (c: Connection, batchSize: number): EventEmitter =>
-    WorldModel(c).collection.find(worldsConditions, { timeout: false }).batchSize(batchSize).stream();
+export const getWorlds = (c: Connection, start: number, batchSize: number): Promise<Array<World>> =>
+    WorldModel(c).find(worldsConditions, { timeout: false }).skip(start).limit(batchSize).lean().exec();
 export const countWorlds = (c: Connection): Promise<number> => WorldModel(c).count(worldsConditions).exec();
 
 const originsConditions: FilterQuery<Origin> = {};
-export const getOrigins = (c: Connection, batchSize: number): EventEmitter =>
-    OriginModel(c).collection.find(originsConditions, { timeout: false }).batchSize(batchSize).stream();
+export const getOrigins = (c: Connection, start: number, batchSize: number): Promise<Array<Origin>> =>
+    // @ts-ignore
+    OriginModel(c).find(originsConditions, { timeout: false }).skip(start).limit(batchSize).lean().exec();
 export const countOrigins = (c: Connection): Promise<number> => OriginModel(c).count(originsConditions).exec();
 
 export type BulkUpdate<T> = Array<BulkWriteOperation<T>>;

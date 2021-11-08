@@ -1,4 +1,3 @@
-import { addDefaultTemplateContent } from '../v1.0.x/scripts/addDefaultTemplateContent';
 import { addActionsHash } from './addActionsHash/index';
 import { createAllProspectReplies } from './createAllProspectReplies/index';
 import { createConnectRepliedStats } from './createConnectRepliedStats/index';
@@ -10,10 +9,11 @@ const maintenanceRequired = async () => {
 
     // await denormalizeWorldsAndOrigins();
     await addActionsHash();
-    await addDefaultTemplateContent();
     await retrieveActionStatsProspects();
 
     console.timeEnd('Script for maintenance');
+
+    nonMaintenanceRequired();
 };
 
 const nonMaintenanceRequired = async () => {

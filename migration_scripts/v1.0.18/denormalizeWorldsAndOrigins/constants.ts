@@ -1,4 +1,2 @@
-export const WORLDS_BATCH_SIZE = 1000;
-export const ORIGINS_BATCH_SIZE = 1000;
-export const TRAVELERS_UPDATE_BATCH_SIZE = 1000;
-export const CAMPAIGNS_UPDATE_BATCH_SIZE = 1000;
+export const WORLDS_BATCH_SIZE = 50;
+export const ORIGINS_BATCH_SIZE = 50;
