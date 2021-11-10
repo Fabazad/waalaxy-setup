@@ -3,7 +3,6 @@ import { Connection, Schema } from 'mongoose';
 import { loginToDatabase } from '../../mongoose';
 import { printStartScript } from '../scriptHelper';
 import { UserModel, UserPermissionsModel } from '../v1.0.13/refactor_duplicated_prospects/schemas';
-import { ProspectListModel } from './schemas';
 
 const PAUSE_BETWEEN_BATCH = 0;
 const BATCH_SIZE = 1000;
@@ -18,11 +17,23 @@ const getUserPermissions = (c: Connection, memberId: string) =>
         'userData.memberId': memberId,
     });
 
-const getProspectList = (c: Connection, user: Schema.Types.ObjectId) => ProspectListModel(c).findOne({ user });
+// const getProspectList = (c: Connection, user: Schema.Types.ObjectId) => ProspectListModel(c).findOne({ user });
 
-const deleteUser = (c: Connection, user: Schema.Types.ObjectId) =>
-    UserModel(c).deleteOne({
-        _id: user.toString(),
+// // const deleteUser = (c: Connection, user: Schema.Types.ObjectId) =>
+// //     UserModel(c).deleteOne({
+// //         _id: user.toString(),
+// //     });
+
+const updateMemberIdUser = (c: Connection, user: Schema.Types.ObjectId, newMemberId: string) =>
+    UserModel(c).updateOne({
+        filter: {
+            _id: user,
+        },
+        update: {
+            $set: {
+                memberId: newMemberId,
+            },
+        },
     });
 
 export const fixUserWithoutPermission = async () => {
@@ -44,7 +55,8 @@ export const fixUserWithoutPermission = async () => {
                 const userPermissions = await getUserPermissions(bouncerDatabase, user.memberId);
                 if (!userPermissions) {
                     usersWithoutPermission += 1;
-                    await deleteUser(stargateDatabase, user);
+                    const newMemberId = user.memberId + '-Archived';
+                    await updateMemberIdUser(stargateDatabase, user._id, newMemberId);
                 }
             }),
         );
