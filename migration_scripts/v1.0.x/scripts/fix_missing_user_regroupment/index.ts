@@ -58,6 +58,8 @@ export const createMissingUserRegroupment = async () => {
 
     let processedUsers = 0;
     let usersWithoutRegroupment = 0;
+    let createdRegroupments = 0;
+    let addedToCompanyRegroupment = 0;
     const usersCount = await countUsers(stargateDatabase);
     console.log(`Found ${usersCount} users`);
 
@@ -72,11 +74,14 @@ export const createMissingUserRegroupment = async () => {
                     if (userCompany) {
                         const companyRegroupment = await getCompanyRegroupment(goulagDatabase, userCompany._id.toString());
                         if (companyRegroupment) {
+                            addedToCompanyRegroupment += 1;
                             await addUserToCompanyRegroupment(goulagDatabase, userCompany._id.toString(), user._id.toString());
                         } else {
+                            createdRegroupments += 1;
                             await createUserRegroupment(goulagDatabase, user._id, userCompany._id.toString());
                         }
                     } else {
+                        createdRegroupments += 1;
                         await createUserRegroupment(goulagDatabase, user._id);
                     }
                 }
@@ -87,6 +92,8 @@ export const createMissingUserRegroupment = async () => {
     }
 
     console.log(`Found ${usersWithoutRegroupment}/${usersCount} with no regroupment`);
+    console.log(`Created ${createdRegroupments} regroupments`);
+    console.log(`${addedToCompanyRegroupment} users added to their company regroupment`);
 
     console.log('exiting');
 
