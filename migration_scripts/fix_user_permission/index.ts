@@ -61,6 +61,7 @@ export const fixUserWithoutPermission = async () => {
                 if (userPermissions.length === 0) {
                     if (prospect) {
                         usersWithoutPermissionButProspect += 1;
+                        console.warn('Panic!');
                     } else {
                         usersWithoutPermission += 1;
                         // await deleteUser(stargateDatabase, user._id);
@@ -95,6 +96,7 @@ export const fixUserWithoutPermission = async () => {
                 } else if (userPermissions[0].user.toString() !== user._id.toString()) {
                     if (prospect) {
                         userWithWrongUserPermissionButProspect += 1;
+                        console.warn('Panic!');
                     } else {
                         // await updateUserPermissionsUser(bouncerDatabase, userPermissions[0]._id, user._id);
                         userWithWrongUserPermission += 1;
