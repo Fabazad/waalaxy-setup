@@ -33,7 +33,7 @@ const createUserRegroupment = (c: Connection, user: Schema.Types.ObjectId, compa
         ...(company ? { company } : {}),
     });
 
-const getUserCompany = (c: Connection, userId: string) => CompanyModel(c).findOne({ user: userId }).lean().exec();
+const getUserCompany = (c: Connection, userId: string) => CompanyModel(c).findOne({ 'seats.user': userId }).lean().exec();
 
 const addUserToCompanyRegroupment = (c: Connection, company: string, userId: string) =>
     UsersRegroupmentModel(c)
@@ -71,8 +71,11 @@ export const createMissingUserRegroupment = async () => {
                     const userCompany = await getUserCompany(bouncerDatabase, user._id);
                     if (userCompany) {
                         const companyRegroupment = await getCompanyRegroupment(goulagDatabase, userCompany._id.toString());
-                        if (companyRegroupment) await addUserToCompanyRegroupment(goulagDatabase, userCompany._id.toString(), user._id.toString());
-                        else await createUserRegroupment(goulagDatabase, user._id, userCompany._id.toString());
+                        if (companyRegroupment) {
+                            await addUserToCompanyRegroupment(goulagDatabase, userCompany._id.toString(), user._id.toString());
+                        } else {
+                            await createUserRegroupment(goulagDatabase, user._id, userCompany._id.toString());
+                        }
                     } else {
                         await createUserRegroupment(goulagDatabase, user._id);
                     }
