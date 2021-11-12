@@ -61,10 +61,10 @@ export const fixUserWithoutPermission = async () => {
                 if (userPermissions.length === 0) {
                     if (prospect) {
                         usersWithoutPermissionButProspect += 1;
-                        console.warn('Panic!');
+                        console.warn('Panic! 1', user._id.toString());
                     } else {
                         usersWithoutPermission += 1;
-                        // await deleteUser(stargateDatabase, user._id);
+                        await deleteUser(stargateDatabase, user._id);
                     }
                 } else if (userPermissions.length > 1) {
                     const validUserPermissions = userPermissions.filter((permission) => permission.user.toString() === user._id.toString());
@@ -78,27 +78,27 @@ export const fixUserWithoutPermission = async () => {
                     });
                     if (!prospect) {
                         if (userPermissionInUseIsValid === 'none') {
-                            // await deleteUserPermissions(
-                            //     bouncerDatabase,
-                            //     userPermissions.map((up) => up._id.toString()),
-                            // );
-                            // await deleteUser(stargateDatabase, user._id);
+                            await deleteUserPermissions(
+                                bouncerDatabase,
+                                userPermissions.map((up) => up._id.toString()),
+                            );
+                            await deleteUser(stargateDatabase, user._id);
                         } else if (userPermissionInUseIsValid) {
                             const invalidUserPermissions = userPermissions.filter((permission) => permission.user.toString() !== user._id.toString());
-                            // await deleteUserPermissions(
-                            //     bouncerDatabase,
-                            //     invalidUserPermissions.map((up) => up._id.toString()),
-                            // );
+                            await deleteUserPermissions(
+                                bouncerDatabase,
+                                invalidUserPermissions.map((up) => up._id.toString()),
+                            );
                         } else {
-                            console.warn('Panic!');
+                            console.warn('Panic! 2', user._id.toString());
                         }
                     }
                 } else if (userPermissions[0].user.toString() !== user._id.toString()) {
                     if (prospect) {
                         userWithWrongUserPermissionButProspect += 1;
-                        console.warn('Panic!');
+                        console.warn('Panic! 3', user._id.toString());
                     } else {
-                        // await updateUserPermissionsUser(bouncerDatabase, userPermissions[0]._id, user._id);
+                        await updateUserPermissionsUser(bouncerDatabase, userPermissions[0]._id, user._id);
                         userWithWrongUserPermission += 1;
                     }
                 }
