@@ -4,12 +4,8 @@ import { Connection, Schema, Types } from 'mongoose';
 import { loginToDatabase } from '../../../mongoose';
 import { printProgress, printStartScript } from '../../scriptHelper';
 import { UserModel, UserPermissionsModel, CompanyModel, UsersRegroupmentModel } from './schemas';
-
-const PAUSE_BETWEEN_BATCH = 0;
-const BATCH_SIZE = 1000;
-const companiesToCreate: Record<string, Array<string>> = {};
-
 dotEnv.config();
+const BATCH_SIZE = 1000;
 
 const countUsers = (c: Connection) => UserModel(c).countDocuments().exec();
 
@@ -54,8 +50,8 @@ const addUserToCompanyRegroupment = (c: Connection, company: string, userId: str
         .lean()
         .exec();
 
-export const findUsersWithoutUserRegroupments = async () => {
-    printStartScript('Starting findUsersWithoutUserRegroupments');
+export const createMissingUserRegroupment = async () => {
+    printStartScript('Starting createMissingUserRegroupment');
     const stargateDatabase = await loginToDatabase(process.env.STARGATE_DATABASE!);
     const goulagDatabase = await loginToDatabase(process.env.GOULAG_DATABASE!);
     const bouncerDatabase = await loginToDatabase(process.env.BOUNCER_DATABASE!);
@@ -94,4 +90,4 @@ export const findUsersWithoutUserRegroupments = async () => {
     process.exit(1);
 };
 
-findUsersWithoutUserRegroupments();
+createMissingUserRegroupment();
