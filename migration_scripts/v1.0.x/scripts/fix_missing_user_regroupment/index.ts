@@ -1,9 +1,9 @@
 import dotEnv from 'dotenv';
 import _ from 'lodash';
 import { Connection, Schema, Types } from 'mongoose';
-import { loginToDatabase } from '../../../mongoose';
-import { printProgress, printStartScript } from '../../scriptHelper';
-import { UserModel, UserPermissionsModel, CompanyModel, UsersRegroupmentModel } from './schemas';
+import { loginToDatabase } from '../../../../mongoose';
+import { printStartScript } from '../../../scriptHelper';
+import { UserModel, CompanyModel, UsersRegroupmentModel } from './schemas';
 dotEnv.config();
 const BATCH_SIZE = 1000;
 
