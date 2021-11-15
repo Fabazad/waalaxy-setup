@@ -1,0 +1,1 @@
+export const EMAIL_CONTENTS_BATCH_SIZE = 1000;
