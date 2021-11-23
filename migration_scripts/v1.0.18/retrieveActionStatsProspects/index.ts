@@ -4,7 +4,7 @@ import dotEnv from 'dotenv';
 import EventEmitter from 'events';
 import { Connection, Document, Model } from 'mongoose';
 import { disconnectFromDatabase, loginToDatabase } from '../../../mongoose';
-import { printStartScript, printProgress } from '../../scriptHelper';
+import { printProgress, printStartScript } from '../../scriptHelper';
 import { HistoryItem, ITraveler, QueuedAction } from './interfaces';
 import {
     ConnectStatModel,
@@ -173,7 +173,7 @@ export const retrieveActionStatsProspects = async () => {
     // console.log(`Found ${travelersCount} Travelers with at least`);
 
     // let hasMore = true;
-    let processedTravelers = 1068000;
+    let processedTravelers = 12068000;
     let statsUpdates = {
         followLinkedin: [],
         messageLinkedin: [],

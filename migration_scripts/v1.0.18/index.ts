@@ -1,6 +1,4 @@
 import dotEnv from 'dotenv';
-
-import { addActionsHash } from './addActionsHash/index';
 import { createAllProspectReplies } from './createAllProspectReplies/index';
 import { createConnectRepliedStats } from './createConnectRepliedStats/index';
 import { retrieveActionStatsProspects } from './retrieveActionStatsProspects/index';
@@ -13,7 +11,7 @@ const maintenanceRequired = async () => {
 
     // await denormalizeWorldsAndOrigins();
     // await addActionsHash();
-    // await retrieveActionStatsProspects();
+    await retrieveActionStatsProspects();
 
     console.timeEnd('Script for maintenance');
 
