@@ -2,7 +2,7 @@ import { disconnectFromDatabase, loginToDatabase } from '../../../mongoose';
 import { printProgress, printStartScript } from '../../scriptHelper';
 import { EMAIL_CONTENTS_BATCH_SIZE } from './constants';
 import { buildEmailContentUpdate, bulkUpdateContents, countEmailContents, getEmailContentsBatch } from './dao';
-import { removeParagraphsFromEmailContents, sleep } from './utils';
+import { isMailContent, removeParagraphsFromEmailContents, sleep } from './utils';
 
 export const removeParagraphsInEmailContents = async () => {
     printStartScript('Starting removeParagraphsInEmailContents');
@@ -16,16 +16,16 @@ export const removeParagraphsInEmailContents = async () => {
     console.log(`\nGoing to update ${count} email contents`);
     await sleep(3000);
 
-    console.log(startDate);
-
     while (processed < count) {
         const batch = await getEmailContentsBatch(voltaire, processed, EMAIL_CONTENTS_BATCH_SIZE);
 
         await bulkUpdateContents(
             voltaire,
-            batch.map((content) =>
-                buildEmailContentUpdate({ _id: content._id, newContent: removeParagraphsFromEmailContents(content.params.emailContent) }),
-            ),
+            batch
+                .filter(isMailContent)
+                .map((content) =>
+                    buildEmailContentUpdate({ _id: content._id, newContent: removeParagraphsFromEmailContents(content.params.emailContent) }),
+                ),
         );
 
         processed += batch.length;
