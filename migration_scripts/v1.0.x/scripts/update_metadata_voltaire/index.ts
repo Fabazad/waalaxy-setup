@@ -9,6 +9,7 @@ dotEnv.config();
 const PAUSE_BETWEEN_BATCH = 1000;
 const COUNT_PAUSE_MODULO = 100;
 
+const defaultContentsName = ["J'aimerais rejoindre votre réseau", 'Merci acceptation', 'Thank you for accepting', 'Would love to join your network'];
 const countUserVoltaireContent = (c: Connection): Promise<Array<string>> => VoltaireContentModel(c).distinct('user').exec();
 
 const getFirstLinkedinConnectTemplate = (c: Connection, user: string): Promise<IVoltaireContent | null> =>
@@ -16,6 +17,7 @@ const getFirstLinkedinConnectTemplate = (c: Connection, user: string): Promise<I
         .findOne({
             user,
             type: 'connect',
+            name: { $nin: defaultContentsName },
         })
         .sort({ createdAt: -1 })
         .lean()
@@ -26,6 +28,7 @@ const getFirstLinkedinMessageTemplate = (c: Connection, user: string): Promise<I
         .findOne({
             user,
             type: 'message',
+            name: { $nin: defaultContentsName },
         })
         .sort({ createdAt: -1 })
         .lean()
@@ -36,6 +39,7 @@ const getFirstEmailTemplate = (c: Connection, user: string): Promise<IVoltaireCo
         .findOne({
             user,
             type: 'email',
+            name: { $nin: defaultContentsName },
         })
         .sort({ createdAt: -1 })
         .lean()

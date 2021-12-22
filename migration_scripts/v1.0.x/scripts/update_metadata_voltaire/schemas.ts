@@ -5,6 +5,7 @@ const VoltaireContentSchema = new Schema(
     {
         type: { type: String, required: true },
         user: { type: String, required: true },
+        name: { type: String, required: true },
     },
     { timestamps: true },
 );

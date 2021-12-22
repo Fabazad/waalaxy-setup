@@ -4,6 +4,7 @@ export interface IVoltaireContent {
     _id: Schema.Types.ObjectId;
     type: 'message' | 'connect' | 'email';
     user: string;
+    name: string;
     createdAt?: string;
 }
 
