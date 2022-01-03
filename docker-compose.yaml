@@ -405,9 +405,10 @@ services:
             driver: none
     redis:
         image: redis:latest
-        command: ['redis-server', '--bind', 'redis', '--port', '6379']
+        command: ['redis-server', '/usr/local/etc/redis/redis.conf', '--bind', 'redis', '--port', '6379']
         volumes:
             - ~/RedisDB/data:/data/db
+            - ./redis.conf:/usr/local/etc/redis/redis.conf
         ports:
             - '6379:6379'
         logging:
